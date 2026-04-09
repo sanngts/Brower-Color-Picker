@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<!-- popup.html —— 扩展弹出页面 -->
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>颜色拾取器</title>
+  <link rel="stylesheet" href="popup.css" />
+</head>
+<body>
+  <!-- 阶段一：初始界面，只显示居中的 Pick 按钮 -->
+  <div class="pick-stage" id="pickStage">
+    <button id="pickBtn" class="pick-btn-big" title="从网页中拾取颜色">
+      <span class="pick-icon">&#9678;</span> Pick
+    </button>
+  </div>
+
+  <!-- 阶段二：取色完成后的完整界面 -->
+  <div class="container main-stage" id="mainStage">
+    <!-- 顶部栏：标题 + 再次 Pick 按钮 -->
+    <div class="header">
+      <h1>颜色拾取器</h1>
+      <button id="pickBtnAgain" class="pick-btn" title="再次取色">
+        <span class="pick-icon">&#9678;</span> Pick
+      </button>
+    </div>
+
+    <!-- 颜色选取区域 -->
+    <div class="section">
+      <div class="color-input-area">
+        <input type="color" id="colorPicker" value="#ff6b6b" />
+        <div class="color-preview" id="colorPreview"></div>
+      </div>
+
+      <div class="color-values">
+        <div class="value-row">
+          <label for="hexInput">HEX</label>
+          <div class="input-group">
+            <input type="text" id="hexInput" value="#FF6B6B" placeholder="#000000" />
+            <button class="copy-btn" data-target="hexInput" title="复制">复制</button>
+          </div>
+        </div>
+        <div class="value-row">
+          <label for="rgbInput">RGB</label>
+          <div class="input-group">
+            <input type="text" id="rgbInput" value="rgb(255, 107, 107)" placeholder="rgb(0, 0, 0)" />
+            <button class="copy-btn" data-target="rgbInput" title="复制">复制</button>
+          </div>
+        </div>
+      </div>
+
+      <button id="saveBtn" class="save-btn">+ 保存到收藏夹</button>
+    </div>
+
+    <!-- 收藏夹 -->
+    <div class="section">
+      <div class="section-header">
+        <h2>收藏夹</h2>
+      </div>
+      <div class="saved-colors" id="savedColors">
+        <p class="empty-hint" id="emptyHint">暂无收藏</p>
+      </div>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
