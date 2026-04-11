@@ -19,6 +19,7 @@ var rgbInput = document.getElementById("rgbInput");
 var saveBtn = document.getElementById("saveBtn");
 var savedColors = document.getElementById("savedColors");
 var copyBtns = document.querySelectorAll(".copy-btn");
+var clearAllBtn = document.getElementById("clearAllBtn")
 
 // ----- 工具函数 -----
 
@@ -210,9 +211,13 @@ saveBtn.addEventListener("click", function () {
     var colors = result.savedColors || [];
     if (colors.includes(currentColor)) return;
     colors.push(currentColor);
-    if (colors.length > 28) colors.shift();
+    if (colors.length > 10) colors.shift();
     saveColorsToStorage(colors);
     renderSavedColors(colors);
+    saveBtn.textContent = "已保存";
+    setTimeout(function() {
+        saveBtn.textContent = "+ 保存到收藏夹";
+    }, 1500);
   });
 });
 
@@ -267,5 +272,9 @@ document.addEventListener("DOMContentLoaded", function () {
       updateColorDisplay("#FF6B6B");
       showPickStage();
     }
+  });
+  clearAllBtn.addEventListener("click",function() {
+    saveColorsToStorage([]);
+    renderSavedColors([]);
   });
 });

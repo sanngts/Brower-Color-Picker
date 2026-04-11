@@ -21,7 +21,7 @@ let colorBarEl = null;
 let sourceDpr = 1;            // 截图时的设备像素比
 
 const ZOOM = 10;              // 放大倍数
-const LENS_SIZE = 90;          // 放大镜圆形直径（缩小以更紧凑）
+const LENS_SIZE = 150;          // 放大镜圆形直径（缩小以更紧凑）
 const CURSOR_OFFSET = 20;      // 光标与放大镜的间距
 
 // ============================================================
@@ -235,7 +235,7 @@ function handleMouseMove(e) {
 
   // 更新颜色信息
   colorBarEl.style.backgroundColor = hex;
-  colorLabelEl.textContent = hex;
+  colorLabelEl.textContent = hex + " " + hexToRgb(hex);
 
   // 显示放大镜（带淡入效果）
   magnifierEl.style.display = "block";
@@ -262,6 +262,17 @@ function rgbToHex(r, g, b) {
     [r, g, b].map(function (v) {
       return v.toString(16).padStart(2, "0");
     }).join("").toUpperCase();
+}
+
+// ============================================================
+// HEX 转 RGB
+// ============================================================
+function hexToRgb(hex) {
+  var h = hex.replace("#", "");
+  var r = parseInt(h.substring(0, 2), 16);
+  var g = parseInt(h.substring(2, 4), 16);
+  var b = parseInt(h.substring(4, 6), 16);
+  return "rgb(" + r + ", " + g + ", " + b + ")";
 }
 
 // ============================================================
@@ -353,10 +364,10 @@ function handleClick(e) {
   chrome.storage.local.set({ pickedColor: hex });
 
   // 自动复制颜色代码到剪贴板
-  copyToClipboard(hex);
+//  copyToClipboard(hex);
 
   // 短暂闪烁放大镜边框作为取色成功的视觉反馈
-  magnifierEl.style.boxShadow = "0 0 0 3px #27ae60, 0 4px 24px rgba(0,0,0,0.45)";
+  magnifierEl.style.boxShadow = "0 0 0 3px #e67e22, 0 4px 24px rgba(0,0,0,0.45)";
   setTimeout(function () {
     cleanupPicker();
   }, 120);
