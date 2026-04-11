@@ -1,1 +1,28 @@
+/* 1. Inter — 现代简洁字体 */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
 
+* {
+    margin: 0;          /* 去掉所有元素默认的外边距 */
+    padding: 0;         /* 去掉所有元素默认的内边距 */
+    box-sizing: border-box; /* 让宽度计算更符合直觉 */
+}
+
+body {
+    width: 200px;           /* 弹窗宽度 */
+    min-height: 120px;      /* 弹窗高度 */
+    background: #f7f9fc;    /* 背景色：浅灰蓝 */
+    font-family: 'Inter', sans-serif; /* 字体 */
+    padding: 18px 16px 22px 16px; /* 内边距，让内容不贴边 */
+}
+
+.container {
+    /*display: flex;          /* 使用弹性布局 */
+    flex-direction: column; /* 子元素垂直排列（一列） */
+    gap: 18px;             /* 子元素之间的间隔为 18 像素 */
+}
+
+.header {
+    display: flex;           /* 使用弹性布局 */
+    flex-direction: column;  /* 子元素垂直排列 */
+    align-items: center;     /* 水平居中对齐 */
+}
