@@ -1,4 +1,4 @@
-# BrowSer-Color-Picker
+# Browser-Color-Picker
 This is a test
 
 There are noting things
