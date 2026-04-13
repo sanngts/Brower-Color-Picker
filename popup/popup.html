@@ -2,39 +2,51 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">  <!-- 适配不同屏幕 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Browser Color Picker</title>
-    <link rel="stylesheet" href="popup.css" />  <!-- 链接到样式文件 -->
+    <link rel="stylesheet" href="popup.css" />
+    <script src="popup.js" defer></script>
 </head>
 <body>
-    <div class="layout">  <!-- 最大的一个盒子，把所有内容包在里面 -->
+    <!-- 总容器 -->
+    <div class="popup">
 
-        <!-- 头部区域：显示扩展名 -->
-        <div class="header">
-            <h3>Browser Color Picker</h3>
-        </div>
-        
-        <!-- 卡片 - 显示颜色信息 -->
-        <div class="card">
-            <div class="color-info" id="colorInfo">
-                <p>颜色信息：<span id="colorValue">未取色</span></p>
-                <p>HEX: <span id="colorHex">------</span></p>
-                <p>RGB: <span id="colorRgb">------</span></p>
+        <!-- 头部区域 -->
+        <header class="popup__header">
+            <img class="popup__logo" src="../icons/icon-48.png" alt="Logo">
+            <h1 class="popup__title">Browser Color Picker</h1>
+        </header>
+
+        <!-- 颜色信息卡片 -->
+        <section class="card card--info">
+            <!-- 取色成功后直接改变卡片 id="colorInfo" 的背景颜色为取到的颜色 -->
+            <div class="card__content" id="colorInfo">
+                <button class="card__btn" id="btnHex" data-color-type="hex">HEX: ------</button>
+                <button class="card__btn" id="btnRgb" data-color-type="rgb">RGB: ---, ---, ---</button>
+                <button class="card__btn" id="btnHsl" data-color-type="hsl">HSL: ---, ---, ---</button>
+                <button class="card__btn" id="btnHsv" data-color-type="hsv">HSV: ---, ---, ---</button>
             </div>
-        </div>
+        </section>
 
-        <!-- 卡片 - 显示历史记录 -->
-        <div class="card">
-            <div class="color-history">
-                <p>历史记录：</p>
+        <!-- 历史记录卡片 -->
+        <section class="card card--history">
+            <div class="card__content" id="colorHistory">
+                <p class="card__title">历史记录：</p>
+                <div class="card__pagination">
+                    <button class="card__page-btn card__page-btn--prev" id="btnPageLeft" title="上一页">&lsaquo;</button>
+                    <!-- 颜色历史记录列表 -->
+                    <ul class="card__list" id="historyList"></ul>
+                    <button class="card__page-btn card__page-btn--next" id="btnPageRight" title="下一页">&rsaquo;</button>
+                </div>
             </div>
-        </div>
+        </section>
 
-        <!-- 按钮 - Pick取色 -->
-        <div class="btn-pick">
-            <button id="pick">Pick</button>
+        <!-- 取色按钮区域 -->
+        <div class="action-bar">
+            <button class="action-bar__pick-btn" id="btnPick">Pick</button>
         </div>
 
     </div>
+    
 </body>
 </html>

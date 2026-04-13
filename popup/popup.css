@@ -1,84 +1,209 @@
-/* 1. Inter — 现代简洁字体 */
+/* ========== CSS块命名尽量使用 BEM 规范 ========== */
+/* ========== 字体引入 ========== */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
 
+/* ========== 基础重置 ========== */
 * {
-  margin: 0;          /* 去掉所有元素默认的外边距 */
-  padding: 0;         /* 去掉所有元素默认的内边距 */
-  box-sizing: border-box; /* 让宽度计算更符合直觉 */
-  -webkit-font-smoothing: antialiased; /* 抗锯齿：字体边缘更细腻 */
+  margin: 0;                           /* 去掉默认外边距 */
+  padding: 0;                          /* 去掉默认内边距 */
+  box-sizing: border-box;              /* 边框盒模型，宽度计算更直观 */
+  -webkit-font-smoothing: antialiased; /* Webkit 抗锯齿 */
   -moz-osx-font-smoothing: grayscale;  /* Firefox 抗锯齿 */
 }
 
-/* 全局 */
+/* ========== 页面级 ========== */
+
 body {
-  width: 240px;           /* 弹窗宽度 */
-  min-height: 160px;      /* 弹窗高度 */
-  background: #f8f6f2;    /* 全局背景色 */
-  font-family: 'Inter', sans-serif; /* 字体 */
-  font-weight: 400;       /* 字重 */
-  padding: 12px 8px 12px 8px; /* 内边距 格式: 上 - 右 - 下 - 左 */
+  font-family: 'Inter', sans-serif;   /* 字体 */
+  font-weight: 400;                   /* 字重 */
 }
 
-/* 外层主容器 */
-.layout {
-  display: flex;
-  flex-direction: column; /* 子元素垂直排列（一列） */
-  gap: 8px;             /* 子元素之间的距离(子元素大部分是卡片) */
+/* ========== Popup 主容器 ========== */
+
+.popup {
+  display: flex;                      /* 弹性布局 */
+  flex-direction: column;             /* 子元素垂直排列 */
+  gap: 8px;                           /* 子元素间距 */
+  width: 252px;                       /* 弹窗固定宽度 */
+  min-height: 160px;                  /* 弹窗最小高度 */
+  background: #fcfcfc;              /* 背景色 */
+  padding: 12px 8px 12px 8px;         /* 内边距 - 上右下左 */
 }
 
-/* 卡片容器 */
+/* ========== 头部 ========== */
+
+.popup__header {
+  display: flex;                      /* 弹性布局 */
+  justify-content: center;            /* 水平居中 */
+}
+
+.popup__logo {
+  width: 24px;                       /* Logo 宽度 */
+  height: 24px;                      /* Logo 高度 */
+  margin-right: 6px;                 /* Logo 与标题间距 */
+}
+
+.popup__title {
+  font-weight: 400;                   /* 常规字重，覆盖 h1 默认粗体 */
+  font-size: 14px;                    /* 标题字号 */
+  line-height: 1.6;                   /* 行高 */
+  color: #333;                      /* 深灰色文字 */
+  letter-spacing: 0.3px;              /* 字间距微调 */
+}
+
+/* ========== 通用卡片 (Block) ========== */
+
 .card {
-  font-size: 14px;             /* 字体大小 */
-  background-color: #ffffff; /* 卡片背景色 */
-  border-radius: 12px;         /* 圆角矩形 */
-  padding: 8px;               /* 内边距 */
-  margin-bottom: 0px;         /* 卡片之间的距离(不用设置，因为layout已经处理) */
-  box-shadow: 0 4px 12px rgba(0,0,0,0.05); /* 轻微阴影增加层次感 */
+  background-color: #e8e8eb;        /* 背景色 */
+  border-radius: 4px;                 /* 圆角 */
+  padding: 8px;                       /* 内边距 */
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05); /* 轻微阴影 */
 }
 
-.header h3 {
-  font-weight: 400;      /* 覆盖 h3 默认粗体字重 */
-  font-size: 14px;       /* 适中的字号 */
-  line-height: 1.6;      /* 行高，让上下文不拥挤 */
-  color: #333;           /* 深灰色，比纯黑更柔和 */
-  letter-spacing: 0.3px; /* 微调字间距 */
+/* ========== 信息卡片 (Modifier) ========== */
+.card--info {
+  font-size: 14px;                    /* 卡片内文字大小 */
 }
 
-.header {
-  display: flex;           /* 使用弹性布局 */
-  justify-content: center;     /* 水平居中 */
+/* ========== 历史颜色卡片 (Modifier) ========== */
+.card--history {
+  color: #777;                      /* 文字颜色 */
+  font-size: 14px;                    /* 卡片内文字大小 */
 }
 
-/* 取色器按钮 */
-.btn-pick {
+/* ========== 卡片内容 (Element) ========== */
+.card__content {
+  display: flex;                      /* 弹性布局 */
+  flex-direction: column;             /* 子元素垂直排列 */
+  gap: 6px;                           /* 子元素间距 */
+}
+
+/* ========== 卡片按钮 (Element) ========== */
+.card__btn {
+  display: flex;                      /* 弹性布局 */
+  justify-content: center;            /* 内容水平居中 */
+  align-items: center;                /* 内容垂直居中 */
+  width: 100%;                        /* 占满父容器宽度 */
+  padding: 8px 12px;                  /* 内边距 - 上下 左右 */
+  font-size: 14px;                    /* 按钮文字大小 */
+  color: #777;                      /* 按钮文字颜色 */
+  font-family: 'Inter', sans-serif;   /* 字体 */
+  font-weight: 500;                   /* 中等字重 */
+  background: #ffffff;              /* 背景色 */
+  border: 1px solid #DCDFE6;        /* 边框 */
+  border-radius: 4px;                 /* 圆角 */
+  cursor: copy;                       /* 复制光标，暗示可点击复制 */
+  transition: all 0.15s ease;         /* 过渡动画 */
+  text-align: left;                   /* 文字左对齐 */
+}
+
+.card__btn:hover {
+  background: #f1f1f1;                /* 悬停时背景加深 */
+  border-color: #c0c4cc;              /* 悬停时边框加深 */
+}
+
+.card__btn:active {
+  transform: scale(0.98);               /* 点击时轻微缩小 */
+}
+
+/* ========== 历史卡片标题 (Element) ========== */
+.card__title {
+  font-weight: 400;                     /* 常规字重 */
+}
+
+/* ========== 历史卡片列表 (Element) ========== */
+.card__pagination {
   display: flex;
-  justify-content: center;  /* 按钮水平居中 */
+  align-items: center;
+  gap: 6px;
 }
 
-.btn-pick button {
-  width: 80%;
-  height: 40px;
-  padding: 4px 0;
-  font-size: 18px;
-  font-weight: 600;
-  font-family: 'Inter', sans-serif;
-  color: #ffffff;
-  background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
-  border: none;
-  border-radius: 10px;
-  cursor: picker;
-  transition: all 0.2s ease;
-  box-shadow: 0 4px 12px rgba(17, 153, 142, 0.3);
+.card__list {
+  list-style: none;                   /* 去掉列表默认圆点 */
+  display: flex;                      /* 弹性布局 */
+  flex-wrap: wrap;                    /* 允许换行 */
+  gap: 6px;                           /* 列表项间距 */
 }
 
-/* 鼠标悬停按钮 */
-.btn-pick button:hover {
-  filter: brightness(1.05);
-  box-shadow: 0 6px 16px rgba(17, 153, 142, 0.4);
-  transform: scale(1.1);    /* 放大 1.1 倍 */
+/* ========== 历史颜色圆形项 (Element) ========== */
+.card__list-item {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid rgba(255,255,255,0.8);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  cursor: pointer;
+  transition: transform 0.15s ease;
+  flex-shrink: 0;
 }
 
-/* 点击按钮 */
-.btn-pick button:active {
-  transform: scale(1);   /* 缩回原来大小，形成真实点击效果 */
+.card__list-item:hover {
+  transform: scale(1.2);          /* 悬停时放大圆形 */
+}
+
+/* ========== 分页按钮 (Element) ========== */
+.card__page-btn {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 1px solid #ccc;
+  background: #ffffff;
+  color: #999;
+  font-size: 14px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+  padding: 0;
+  user-select: none;
+}
+
+.card__page-btn:hover:not(:disabled) {
+  background: #f0f0f0;
+  border-color: #aaa;
+  color: #666;
+}
+
+.card__page-btn:active:not(:disabled) {
+  transform: scale(0.92);
+}
+
+.card__page-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+/* ========== 取色按钮区域 (Element) ========== */
+.action-bar {
+  display: flex;                      /* 弹性布局 */
+  justify-content: center;            /* 按钮水平居中 */
+}
+
+.action-bar__pick-btn {
+  width: 100%;                        /* 按钮宽度 */
+  height: 40px;                       /* 按钮高度 */
+  padding: 4px 0;                     /* 上下内边距 */
+  font-size: 18px;                    /* 按钮文字大小 */
+  font-weight: 600;                   /* 半粗字重 */
+  font-family: 'Inter', sans-serif;   /* 字体 */
+  color: #ffffff;                   /* 文字颜色 */
+  background: linear-gradient(135deg, #409EFF 0%,#74bcfe 100%); /* 渐变背景 */
+  border: none;                       /* 无边框 */
+  border-radius: 4px;                 /* 圆角 */
+  cursor: pointer;                    /* 手型光标 */
+  transition: all 0.2s ease;          /* 过渡动画 */
+  box-shadow: 0 2px 8px #1d8eff;    /* 阴影 */
+}
+
+.action-bar__pick-btn:hover {
+  filter: brightness(1.05);           /* 悬停时亮度增加 */
+  box-shadow: 0 4px 10px #0080ff;   /* 阴影增强 */
+  transform: scale(1.00);             /* 悬停大小 */
+}
+
+.action-bar__pick-btn:active {
+  transform: scale(0.98);             /* 点击时缩小 */
 }
