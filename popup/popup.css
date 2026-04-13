@@ -2,37 +2,83 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
 
 * {
-    margin: 0;          /* 去掉所有元素默认的外边距 */
-    padding: 0;         /* 去掉所有元素默认的内边距 */
-    box-sizing: border-box; /* 让宽度计算更符合直觉 */
-    -webkit-font-smoothing: antialiased; /* 抗锯齿：字体边缘更细腻 */
-    -moz-osx-font-smoothing: grayscale;  /* Firefox 抗锯齿 */
+  margin: 0;          /* 去掉所有元素默认的外边距 */
+  padding: 0;         /* 去掉所有元素默认的内边距 */
+  box-sizing: border-box; /* 让宽度计算更符合直觉 */
+  -webkit-font-smoothing: antialiased; /* 抗锯齿：字体边缘更细腻 */
+  -moz-osx-font-smoothing: grayscale;  /* Firefox 抗锯齿 */
 }
 
+/* 全局 */
 body {
-    width: 200px;           /* 弹窗宽度 */
-    min-height: 120px;      /* 弹窗高度 */
-    background: #f7f9fc;    /* 背景色 */
-    font-family: 'Inter', sans-serif; /* 字体 */
-    font-weight: 400;       /* 字重 */
-    padding: 18px 16px 22px 16px; /* 内边距，让内容不贴边 */
+  width: 240px;           /* 弹窗宽度 */
+  min-height: 160px;      /* 弹窗高度 */
+  background: #f8f6f2;    /* 全局背景色 */
+  font-family: 'Inter', sans-serif; /* 字体 */
+  font-weight: 400;       /* 字重 */
+  padding: 12px 8px 12px 8px; /* 内边距 格式: 上 - 右 - 下 - 左 */
 }
 
-.container {
-    flex-direction: column; /* 子元素垂直排列（一列） */
-    gap: 18px;             /* 子元素之间的间隔为 18 像素 */
+/* 外层主容器 */
+.layout {
+  display: flex;
+  flex-direction: column; /* 子元素垂直排列（一列） */
+  gap: 8px;             /* 子元素之间的距离(子元素大部分是卡片) */
+}
+
+/* 卡片容器 */
+.card {
+  font-size: 14px;             /* 字体大小 */
+  background-color: #ffffff; /* 卡片背景色 */
+  border-radius: 12px;         /* 圆角矩形 */
+  padding: 8px;               /* 内边距 */
+  margin-bottom: 0px;         /* 卡片之间的距离(不用设置，因为layout已经处理) */
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05); /* 轻微阴影增加层次感 */
 }
 
 .header h3 {
-    font-weight: 400;      /* 覆盖 h3 默认粗体字重 */
-    font-size: 14px;       /* 适中的字号 */
-    line-height: 1.6;      /* 行高，让上下文不拥挤 */
-    color: #333;           /* 深灰色，比纯黑更柔和 */
-    letter-spacing: 0.3px; /* 微调字间距 */
+  font-weight: 400;      /* 覆盖 h3 默认粗体字重 */
+  font-size: 14px;       /* 适中的字号 */
+  line-height: 1.6;      /* 行高，让上下文不拥挤 */
+  color: #333;           /* 深灰色，比纯黑更柔和 */
+  letter-spacing: 0.3px; /* 微调字间距 */
 }
 
 .header {
-    display: flex;           /* 使用弹性布局 */
-    flex-direction: column;  /* 子元素垂直排列 */
-    align-items: center;     /* 水平居中对齐 */
+  display: flex;           /* 使用弹性布局 */
+  justify-content: center;     /* 水平居中 */
+}
+
+/* 取色器按钮 */
+.btn-pick {
+  display: flex;
+  justify-content: center;  /* 按钮水平居中 */
+}
+
+.btn-pick button {
+  width: 80%;
+  height: 40px;
+  padding: 4px 0;
+  font-size: 18px;
+  font-weight: 600;
+  font-family: 'Inter', sans-serif;
+  color: #ffffff;
+  background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+  border: none;
+  border-radius: 10px;
+  cursor: picker;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(17, 153, 142, 0.3);
+}
+
+/* 鼠标悬停按钮 */
+.btn-pick button:hover {
+  filter: brightness(1.05);
+  box-shadow: 0 6px 16px rgba(17, 153, 142, 0.4);
+  transform: scale(1.1);    /* 放大 1.1 倍 */
+}
+
+/* 点击按钮 */
+.btn-pick button:active {
+  transform: scale(1);   /* 缩回原来大小，形成真实点击效果 */
 }

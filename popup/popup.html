@@ -7,11 +7,34 @@
     <link rel="stylesheet" href="popup.css" />  <!-- 链接到样式文件 -->
 </head>
 <body>
-    <div class="container">  <!-- 最大的一个盒子，把所有内容包在里面 -->
+    <div class="layout">  <!-- 最大的一个盒子，把所有内容包在里面 -->
+
         <!-- 头部区域：显示扩展名 -->
         <div class="header">
             <h3>Browser Color Picker</h3>
         </div>
+        
+        <!-- 卡片 - 显示颜色信息 -->
+        <div class="card">
+            <div class="color-info" id="colorInfo">
+                <p>颜色信息：<span id="colorValue">未取色</span></p>
+                <p>HEX: <span id="colorHex">------</span></p>
+                <p>RGB: <span id="colorRgb">------</span></p>
+            </div>
+        </div>
+
+        <!-- 卡片 - 显示历史记录 -->
+        <div class="card">
+            <div class="color-history">
+                <p>历史记录：</p>
+            </div>
+        </div>
+
+        <!-- 按钮 - Pick取色 -->
+        <div class="btn-pick">
+            <button id="pick">Pick</button>
+        </div>
+
     </div>
 </body>
 </html>
