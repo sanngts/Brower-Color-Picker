@@ -1,6 +1,4 @@
 /* ========== CSS块命名尽量使用 BEM 规范 ========== */
-/* ========== 字体引入 ========== */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
 
 /* ========== 基础重置 ========== */
 * {
@@ -14,7 +12,6 @@
 /* ========== 页面级 ========== */
 
 body {
-  font-family: 'Inter', sans-serif;   /* 字体 */
   font-weight: 400;                   /* 字重 */
 }
 
@@ -87,7 +84,6 @@ body {
   padding: 8px 12px;                  /* 内边距 - 上下 左右 */
   font-size: 14px;                    /* 按钮文字大小 */
   color: #777;                      /* 按钮文字颜色 */
-  font-family: 'Inter', sans-serif;   /* 字体 */
   font-weight: 500;                   /* 中等字重 */
   background: #ffffff;              /* 背景色 */
   border: 1px solid #DCDFE6;        /* 边框 */
@@ -188,7 +184,6 @@ body {
   padding: 4px 0;                     /* 上下内边距 */
   font-size: 18px;                    /* 按钮文字大小 */
   font-weight: 600;                   /* 半粗字重 */
-  font-family: 'Inter', sans-serif;   /* 字体 */
   color: #ffffff;                   /* 文字颜色 */
   background: linear-gradient(135deg, #409EFF 0%,#74bcfe 100%); /* 渐变背景 */
   border: none;                       /* 无边框 */
