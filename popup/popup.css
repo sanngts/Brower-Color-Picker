@@ -20,18 +20,19 @@ body {
 .popup {
   display: flex;                      /* 弹性布局 */
   flex-direction: column;             /* 子元素垂直排列 */
-  gap: 8px;                           /* 子元素间距 */
-  width: 252px;                       /* 弹窗固定宽度 */
+  gap: 12px;                          /* 子元素间距 */
+  width: 244px;                       /* 弹窗固定宽度 */
   min-height: 160px;                  /* 弹窗最小高度 */
   background: #fcfcfc;              /* 背景色 */
   padding: 12px 8px 12px 8px;         /* 内边距 - 上右下左 */
+  user-select: none;                  /* 默认禁止选择文本 */
 }
 
 /* ========== 头部 ========== */
 
 .popup__header {
   display: flex;                      /* 弹性布局 */
-  justify-content: center;            /* 水平居中 */
+  justify-content: start;             /* 左对齐 */
 }
 
 .popup__logo {
@@ -46,6 +47,7 @@ body {
   line-height: 1.6;                   /* 行高 */
   color: #333;                      /* 深灰色文字 */
   letter-spacing: 0.3px;              /* 字间距微调 */
+  user-select: all;                   /* 点击标题直接全选 */
 }
 
 /* ========== 通用卡片 (Block) ========== */
@@ -53,12 +55,16 @@ body {
 .card {
   background-color: #e8e8eb;        /* 背景色 */
   border-radius: 4px;                 /* 圆角 */
-  padding: 8px;                       /* 内边距 */
+  padding: 4px;                       /* 内边距 */
   box-shadow: 0 4px 12px rgba(0,0,0,0.05); /* 轻微阴影 */
 }
 
 /* ========== 信息卡片 (Modifier) ========== */
 .card--info {
+  display: flex;                      /* 弹性布局 */
+  flex-direction: row;                /* 子元素水平排列 */
+  gap: 4px;                           /* 子元素间距 */
+  align-items: stretch;               /* 让预览卡片和按钮区等高 */
   font-size: 14px;                    /* 卡片内文字大小 */
 }
 
@@ -72,15 +78,40 @@ body {
 .card__content {
   display: flex;                      /* 弹性布局 */
   flex-direction: column;             /* 子元素垂直排列 */
-  gap: 6px;                           /* 子元素间距 */
+  gap: 4px;                           /* 子元素间距 */
+}
+
+/* ========== 卡片内容 - 窄宽变体 (Element Modifier) ========== */
+.card__content--narrow {
+  width: 75%;                         /* 占总卡片宽度的百分比，剩余的比例给预览卡片 */
+}
+
+/* ========== 预览颜色卡片 (Element) ========== */
+.card__preview {
+  flex: 1;                            /* 占满剩余空间 */
+  min-width: 0;                       /* 允许缩小到比内容更窄 */
+  overflow: hidden;                   /* 超出部分隐藏 */
+  height: auto;                       /* 高度自适应内容 */
+  background-color: #ffffff;        /* 默认白色背景 */
+  border: 1px solid #DCDFE6;        /* 边框 */
+  border-radius: 4px;                 /* 圆角 */
+  display: flex;                      /* 内部文字居中 */
+  align-items: center;
+  justify-content: center;
+}
+
+.card__preview-text {
+  color: #777;                      /* 文字颜色 */
+  font-size: 14px;                    /* 文字大小 */
+  text-align: center;                 /* 文字居中 */
+  user-select: none;                  /* 禁止选择文本 */
 }
 
 /* ========== 卡片按钮 (Element) ========== */
 .card__btn {
   display: flex;                      /* 弹性布局 */
-  justify-content: center;            /* 内容水平居中 */
   align-items: center;                /* 内容垂直居中 */
-  width: 100%;                        /* 占满父容器宽度 */
+  width: 100%;                        /* 宽度 */
   padding: 8px 12px;                  /* 内边距 - 上下 左右 */
   font-size: 14px;                    /* 按钮文字大小 */
   color: #777;                      /* 按钮文字颜色 */
@@ -91,6 +122,7 @@ body {
   cursor: copy;                       /* 复制光标，暗示可点击复制 */
   transition: all 0.15s ease;         /* 过渡动画 */
   text-align: left;                   /* 文字左对齐 */
+  user-select: text;                  /* 允许选择文本 */
 }
 
 .card__btn:hover {
@@ -105,6 +137,7 @@ body {
 /* ========== 历史卡片标题 (Element) ========== */
 .card__title {
   font-weight: 400;                     /* 常规字重 */
+  user-select: none;                    /* 禁止选择文本 */
 }
 
 /* ========== 历史卡片列表 (Element) ========== */
@@ -173,12 +206,12 @@ body {
 }
 
 /* ========== 取色按钮区域 (Element) ========== */
-.action-bar {
+.popup__footer {
   display: flex;                      /* 弹性布局 */
   justify-content: center;            /* 按钮水平居中 */
 }
 
-.action-bar__pick-btn {
+.popup__pick-btn {
   width: 100%;                        /* 按钮宽度 */
   height: 40px;                       /* 按钮高度 */
   padding: 4px 0;                     /* 上下内边距 */
@@ -193,12 +226,12 @@ body {
   box-shadow: 0 2px 8px #1d8eff;    /* 阴影 */
 }
 
-.action-bar__pick-btn:hover {
+.popup__pick-btn:hover {
   filter: brightness(1.05);           /* 悬停时亮度增加 */
   box-shadow: 0 4px 10px #0080ff;   /* 阴影增强 */
   transform: scale(1.00);             /* 悬停大小 */
 }
 
-.action-bar__pick-btn:active {
+.popup__pick-btn:active {
   transform: scale(0.98);             /* 点击时缩小 */
 }

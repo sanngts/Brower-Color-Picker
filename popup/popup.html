@@ -19,12 +19,14 @@
 
         <!-- 颜色信息卡片 -->
         <section class="card card--info">
-            <!-- 取色成功后直接改变卡片 id="colorInfo" 的背景颜色为取到的颜色 -->
-            <div class="card__content" id="colorInfo">
+            <div class="card__content card__content--narrow" id="colorInfo">
                 <button class="card__btn" id="btnHex" data-color-type="hex">HEX: ------</button>
                 <button class="card__btn" id="btnRgb" data-color-type="rgb">RGB: ---, ---, ---</button>
                 <button class="card__btn" id="btnHsl" data-color-type="hsl">HSL: ---, ---, ---</button>
                 <button class="card__btn" id="btnHsv" data-color-type="hsv">HSV: ---, ---, ---</button>
+            </div>
+            <div class="card__preview" id="colorPreview">
+                <p class="card__preview-text">Preview</p>
             </div>
         </section>
 
@@ -42,8 +44,8 @@
         </section>
 
         <!-- 取色按钮区域 -->
-        <div class="action-bar">
-            <button class="action-bar__pick-btn" id="btnPick">Pick</button>
+        <div class="popup__footer">
+            <button class="popup__pick-btn" id="btnPick">Pick</button>
         </div>
 
     </div>
