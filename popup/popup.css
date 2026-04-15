@@ -10,13 +10,11 @@
 }
 
 /* ========== 页面级 ========== */
-
 body {
   font-weight: 400;                   /* 字重 */
 }
 
 /* ========== Popup 主容器 ========== */
-
 .popup {
   display: flex;                      /* 弹性布局 */
   flex-direction: column;             /* 子元素垂直排列 */
@@ -29,7 +27,6 @@ body {
 }
 
 /* ========== 头部 ========== */
-
 .popup__header {
   display: flex;                      /* 弹性布局 */
   justify-content: start;             /* 左对齐 */
@@ -49,8 +46,29 @@ body {
   letter-spacing: 0.3px;              /* 字间距微调 */
 }
 
-/* ========== 通用卡片 (Block) ========== */
+.popup__github {
+  margin-left: auto;                  /* 左边距撑满: 贴右对齐 */
+  display: flex;                      /* 弹性布局，使内部图标居中 */
+  align-items: center;                /* 垂直居中 */
+  justify-content: center;            /* 水平居中 */
+  width: 24px;                        /* 与 logo 同宽，保持视觉一致 */
+  height: 24px;                       /* 与 logo 同高 */
+  color: #333;                      /* 默认颜色，与标题文字一致 */
+  cursor: pointer;                    /* 手型光标 */
+  transition: color 0.15s ease;       /* 颜色过渡动画 */
+  text-decoration: none;              /* 去掉下划线 */
+}
 
+.popup__github:hover {
+  color: #409EFF;                   /* 悬停时变为蓝色 */
+}
+
+.popup__github-icon {
+  width: 100%;                        /* 撑满父容器 */
+  height: 100%;                       /* 撑满父容器 */
+}
+
+/* ========== 通用卡片 (Block) ========== */
 .card {
   background-color: #e8e8eb;        /* 背景色 */
   border-radius: 4px;                 /* 圆角 */
