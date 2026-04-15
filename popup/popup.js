@@ -1,5 +1,11 @@
+const colorPreview = document.getElementById('colorPreview');
+const btnHex = document.getElementById('btnHex');
+const btnRgb = document.getElementById('btnRgb');
+const btnHsl = document.getElementById('btnHsl');
+const btnHsv = document.getElementById('btnHsv');
+
 function showColor(color) {
-    document.getElementById('colorPreview').style.backgroundColor = color;
+    colorPreview.style.backgroundColor = color;
 }
 
 document.getElementById("btnPick").addEventListener("click", pickcolor);
@@ -11,7 +17,7 @@ async function pickcolor()
         const result = await dropper.open();
         const color = result.sRGBHex;
 
-        showColor(color);
+        updateColorInfo(color);
     } catch (error) 
     {
         console.error(error);
@@ -82,4 +88,17 @@ function rgbToHsv({ r, g, b }) {
         s: Math.round(s * 100),
         v: Math.round(v * 100),
     };
+}
+function updateColorInfo(hex) {
+    const rgb = hexToRgb(hex);
+    const hsl = rgbToHsl(rgb);
+    const hsv = rgbToHsv(rgb);
+
+    btnHex.textContent = `HEX: ${hex}`;
+    btnRgb.textContent = `RGB: ${rgb.r}, ${rgb.g}, ${rgb.b}`;
+    btnHsl.textContent = `HSL: ${hsl.h}, ${hsl.s}%, ${hsl.l}%`;
+    btnHsv.textContent = `HSV: ${hsv.h}, ${hsv.s}%, ${hsv.v}%`;
+
+    colorPreview.style.backgroundColor = hex;
+    colorPreview.querySelector('.card__preview-text').style.display = 'none';
 }
