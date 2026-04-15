@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Browser Color Picker</title>
     <link rel="stylesheet" href="popup.css" />
-    <script src="popup.js" defer></script>
 </head>
 <body>
     <!-- 总容器 -->
@@ -33,7 +32,7 @@
         <!-- 历史记录卡片 -->
         <section class="card card--history">
             <div class="card__content" id="colorHistory">
-                <p class="card__title">历史记录：</p>
+                <p class="card__title">Recent:</p>
                 <div class="card__pagination">
                     <button class="card__page-btn card__page-btn--prev" id="btnPageLeft" title="上一页">&lsaquo;</button>
                     <!-- 颜色历史记录列表 -->
@@ -49,7 +48,6 @@
         </div>
 
     </div>
-    
-
+    <script src="popup.js"></script>
 </body>
 </html>

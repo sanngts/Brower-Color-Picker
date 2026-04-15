@@ -1,14 +1,25 @@
+// ========== DOM 引入 ==========
 const colorPreview = document.getElementById('colorPreview');
 const btnHex = document.getElementById('btnHex');
 const btnRgb = document.getElementById('btnRgb');
 const btnHsl = document.getElementById('btnHsl');
 const btnHsv = document.getElementById('btnHsv');
+const btnPick = document.getElementById("btnPick");
+
+// 全局颜色对象，存储当前取色结果的颜色信息
+let colors = {'hex': '', 'rgb': '', 'hsl': '', 'hsv': ''};
 
 function showColor(color) {
     colorPreview.style.backgroundColor = color;
 }
 
-document.getElementById("btnPick").addEventListener("click", pickcolor);
+// 添加事件监听器
+btnPick.addEventListener("click", pickcolor);
+btnHex.addEventListener("click", () => copyColorToClipboard('hex'));
+btnRgb.addEventListener("click", () => copyColorToClipboard('rgb'));
+btnHsl.addEventListener("click", () => copyColorToClipboard('hsl'));
+btnHsv.addEventListener("click", () => copyColorToClipboard('hsv'));
+
 async function pickcolor() 
 {
     try 
@@ -18,6 +29,8 @@ async function pickcolor()
         const color = result.sRGBHex;
 
         updateColorInfo(color);
+        // 默认自动复制 HEX 颜色代码到剪贴板
+        copyColorToClipboard('hex');
     } catch (error) 
     {
         console.error(error);
@@ -94,6 +107,10 @@ function updateColorInfo(hex) {
     const hsl = rgbToHsl(rgb);
     const hsv = rgbToHsv(rgb);
 
+    // 更新全局颜色对象
+    // 语法糖: 属性简写(Shorthand Properties): 当对象的键名和变量名相同时，可以只写一次。
+    colors = { hex, rgb, hsl, hsv };
+
     btnHex.textContent = `HEX: ${hex}`;
     btnRgb.textContent = `RGB: ${rgb.r}, ${rgb.g}, ${rgb.b}`;
     btnHsl.textContent = `HSL: ${hsl.h}, ${hsl.s}%, ${hsl.l}%`;
@@ -101,4 +118,25 @@ function updateColorInfo(hex) {
 
     colorPreview.style.backgroundColor = hex;
     colorPreview.querySelector('.card__preview-text').style.display = 'none';
+}
+
+function copyColorToClipboard(colorCode) {
+    if(!colors.hex) {
+        return; // 如果没有颜色信息，直接返回，不执行复制操作
+    }
+    if(colorCode == 'hex') {
+        navigator.clipboard.writeText(colors.hex);
+    } else if(colorCode == 'rgb') {
+        navigator.clipboard.writeText(`${colors.rgb.r}, ${colors.rgb.g}, ${colors.rgb.b}`);
+    } else if(colorCode == 'hsl') {
+        navigator.clipboard.writeText(`${colors.hsl.h}, ${colors.hsl.s}%, ${colors.hsl.l}%`);
+    } else if(colorCode == 'hsv') {
+        navigator.clipboard.writeText(`${colors.hsv.h}, ${colors.hsv.s}%, ${colors.hsv.v}%`);
+    }
+    // 提示用户已复制
+    btnPick.textContent = 'Copied!';
+    // 1秒后恢复按钮文本
+    setTimeout(() => {
+        btnPick.textContent = 'Pick';
+    }, 1000);
 }

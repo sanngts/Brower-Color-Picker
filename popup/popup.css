@@ -47,7 +47,6 @@ body {
   line-height: 1.6;                   /* 行高 */
   color: #333;                      /* 深灰色文字 */
   letter-spacing: 0.3px;              /* 字间距微调 */
-  user-select: all;                   /* 点击标题直接全选 */
 }
 
 /* ========== 通用卡片 (Block) ========== */
@@ -122,7 +121,6 @@ body {
   cursor: copy;                       /* 复制光标，暗示可点击复制 */
   transition: all 0.15s ease;         /* 过渡动画 */
   text-align: left;                   /* 文字左对齐 */
-  user-select: text;                  /* 允许选择文本 */
 }
 
 .card__btn:hover {
