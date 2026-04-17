@@ -5,6 +5,13 @@ const btnRgb = document.getElementById('btnRgb');
 const btnHsl = document.getElementById('btnHsl');
 const btnHsv = document.getElementById('btnHsv');
 const btnPick = document.getElementById("btnPick");
+const btnPageLeft = document.getElementById('btnPageLeft');
+const btnPageRight = document.getElementById('btnPageRight');
+const historyList = document.getElementById('historyList');
+const colorHistory = [];
+const PAGE_SIZE = 5;     
+const MAX_HISTORY = 10;  
+let currentPage = 0;    
 
 // 全局颜色对象，存储当前取色结果的颜色信息
 let colors = {'hex': '', 'rgb': '', 'hsl': '', 'hsv': ''};
@@ -118,6 +125,7 @@ function updateColorInfo(hex) {
 
     colorPreview.style.backgroundColor = hex;
     colorPreview.querySelector('.card__preview-text').style.display = 'none';
+    addHistoryColor(hex);
 }
 
 function copyColorToClipboard(colorCode) {
@@ -140,3 +148,49 @@ function copyColorToClipboard(colorCode) {
         btnPick.textContent = 'Pick';
     }, 1000);
 }
+
+function renderHistoryPage() {
+    historyList.innerHTML = ''; 
+
+    const start = currentPage * PAGE_SIZE;
+    const pageItems = colorHistory.slice(start, start + PAGE_SIZE);
+
+    pageItems.forEach(hex => {
+        const li = document.createElement('li');
+        li.className = 'card__list-item';
+        li.title = hex;
+        li.style.backgroundColor = hex;
+        historyList.appendChild(li);
+    });
+
+    const totalPages = Math.ceil(colorHistory.length / PAGE_SIZE);
+    btnPageLeft.disabled  = currentPage <= 0;
+    btnPageRight.disabled = currentPage >= totalPages - 1;
+}
+
+function addHistoryColor(hex) {
+    colorHistory.unshift(hex); 
+
+    if (colorHistory.length > MAX_HISTORY) {
+        colorHistory.pop();
+    }
+
+    currentPage = 0;
+    renderHistoryPage();
+}
+
+btnPageLeft.addEventListener('click', () => {
+    if (currentPage > 0) {
+        currentPage--;
+        renderHistoryPage();
+    }
+});
+
+btnPageRight.addEventListener('click', () => {
+    const totalPages = Math.ceil(colorHistory.length / PAGE_SIZE);
+    if (currentPage < totalPages - 1) {
+        currentPage++;
+        renderHistoryPage();
+    }
+});
+
