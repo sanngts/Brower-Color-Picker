@@ -109,7 +109,7 @@ function rgbToHsv({ r, g, b }) {
         v: Math.round(v * 100),
     };
 }
-function updateColorInfo(hex) {
+function updateColorInfo(hex, addToHistory = true) {
     const rgb = hexToRgb(hex);
     const hsl = rgbToHsl(rgb);
     const hsv = rgbToHsv(rgb);
@@ -125,7 +125,9 @@ function updateColorInfo(hex) {
 
     colorPreview.style.backgroundColor = hex;
     colorPreview.querySelector('.card__preview-text').style.display = 'none';
-    addHistoryColor(hex);
+    if (addToHistory) {
+        addHistoryColor(hex);
+    }
 }
 
 function copyColorToClipboard(colorCode) {
@@ -160,6 +162,7 @@ function renderHistoryPage() {
         li.className = 'card__list-item';
         li.title = hex;
         li.style.backgroundColor = hex;
+        li.addEventListener('click', () => updateColorInfo(hex, false));
         historyList.appendChild(li);
     });
 
