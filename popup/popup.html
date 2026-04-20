@@ -7,19 +7,32 @@
     <link rel="stylesheet" href="popup.css" />
 </head>
 <body>
-    <!-- 总容器 -->
+    <!-- ============================================================
+         popup.html —— 扩展弹出页面
+         
+         页面结构说明：
+         整体采用纵向弹性布局，从上到下依次为：
+           1. 头部：Logo + 标题 + GitHub 链接
+           2. 颜色信息卡片：四种格式按钮 + 收藏按钮 + 颜色预览
+           3. 历史记录卡片：最近取色的圆形色块列表 + 分页控制
+           4. 收藏夹卡片：收藏的方形色块列表 + 计数器 + 清空按钮
+           5. 底部：取色按钮
+         ============================================================ -->
+
+    <!-- 总容器 (Block: popup) -->
     <div class="popup">
 
-        <!-- 头部区域 -->
+        <!-- 头部区域：Logo + 标题 + GitHub 图标链接 -->
         <header class="popup__header">
             <img class="popup__logo" src="../icons/icon-48.png" alt="Logo">
             <h1 class="popup__title">Browser Color Picker</h1>
-            <!-- GitHub仓库链接跳转 -->
+            <!-- GitHub 仓库链接，新标签页打开 -->
             <a href="https://github.com/sanngts/Browser-Color-Picker"
                 class="popup__github"
                 target="_blank"
                 rel="noopener noreferrer"
                 title="Opensource on GitHub">
+                <!-- GitHub Octocat SVG 图标 -->
                 <svg class="popup__github-icon" viewBox="0 0 16 16" width="18" height="18" fill="currentColor" aria-hidden="true">
                     <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47
                         7.59.4.07.55-.17.55-.38
@@ -39,33 +52,68 @@
             </a>
         </header>
 
-        <!-- 颜色信息卡片 -->
+        <!-- 颜色信息卡片 (Modifier: card--info)
+             左侧：四个格式按钮 + 收藏按钮（占 75% 宽度）
+             右侧：颜色预览色块（占 25% 宽度）
+             点击格式按钮会将对应格式写入剪贴板 -->
         <section class="card card--info">
             <div class="card__content card__content--narrow" id="colorInfo">
+                <!-- 格式显示/复制按钮，点击复制对应格式到剪贴板 -->
                 <button class="card__btn" id="btnHex" data-color-type="hex">HEX: </button>
                 <button class="card__btn" id="btnRgb" data-color-type="rgb">RGB: </button>
                 <button class="card__btn" id="btnHsl" data-color-type="hsl">HSL: </button>
                 <button class="card__btn" id="btnHsv" data-color-type="hsv">HSV: </button>
+                <!-- 收藏按钮：星形图标，点击将当前颜色添加到收藏夹 -->
+                <button class="card__btn card__btn--save" id="btnSave" title="Add to favorites">&#9734; Favorite</button>
             </div>
+            <!-- 颜色预览块：背景色随当前选中颜色实时变化 -->
             <div class="card__preview" id="colorPreview">
                 <p class="card__preview-text">Preview</p>
             </div>
         </section>
 
-        <!-- 历史记录卡片 -->
+        <!-- 历史记录卡片 (Modifier: card--history)
+             展示最近取色的颜色列表，每页 5 个，最多保存 10 条
+             点击色块可快速切换显示该颜色 -->
         <section class="card card--history">
             <div class="card__content" id="colorHistory">
-                <p class="card__title">Recent:</p>
+                <div class="card__fav-header">
+                    <p class="card__title">Recent:</p>
+                    <span class="card__fav-count" style="visibility:hidden;">&nbsp;</span>
+                    <button class="card__fav-clear" id="btnClearHistory" title="Clear all">Clear</button>
+                </div>
                 <div class="card__pagination">
-                    <button class="card__page-btn card__page-btn--prev" id="btnPageLeft" title="上一页">&lsaquo;</button>
-                    <!-- 颜色历史记录列表 -->
+                    <button class="card__page-btn card__page-btn--prev" id="btnPageLeft" title="Prev">&lsaquo;</button>
+                    <!-- 历史颜色圆形色块列表（由 JS 动态渲染） -->
                     <ul class="card__list" id="historyList"></ul>
-                    <button class="card__page-btn card__page-btn--next" id="btnPageRight" title="下一页">&rsaquo;</button>
+                    <button class="card__page-btn card__page-btn--next" id="btnPageRight" title="Next">&rsaquo;</button>
                 </div>
             </div>
         </section>
 
-        <!-- 取色按钮区域 -->
+        <!-- 收藏夹卡片 (Modifier: card--favorites)
+             展示用户主动收藏的颜色列表，最多 10 个
+             每个色块右上角有悬停显示的 × 删除按钮
+             点击色块可快速切换显示该颜色 -->
+        <section class="card card--favorites">
+            <div class="card__content">
+                <!-- 收藏夹标题行：标题 + 数量计数器 + 清空按钮 -->
+                <div class="card__fav-header">
+                    <p class="card__title">Favorites:</p>
+                    <!-- 收藏数量计数器，格式为 "当前数/最大数"，如 "3/10" -->
+                    <span class="card__fav-count" id="favoriteCount">0/12</span>
+                    <!-- 清空按钮：一键清空所有收藏颜色 -->
+                    <button class="card__fav-clear" id="btnClearFavorites" title="Clear all">Clear</button>
+                </div>
+                <!-- 收藏颜色列表（由 JS 动态渲染） -->
+                <div class="card__fav-list" id="favoriteList">
+                    <p class="card__hint">No favorites</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 取色按钮区域
+             点击后启动截图取色流程：截图 → 发送给 content script → 关闭 popup → 页面上放大镜取色 -->
         <div class="popup__footer">
             <button class="popup__pick-btn" id="btnPick">Pick</button>
         </div>

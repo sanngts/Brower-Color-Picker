@@ -1,143 +1,180 @@
-/* ========== CSS块命名尽量使用 BEM 规范 ========== */
+/* ============================================================
+ * popup.css —— 弹窗页面样式表
+ *
+ * CSS 命名规范：BEM (Block Element Modifier)
+ *   Block（块）:   独立的功能模块，如 .popup、.card
+ *   Element（元素）: 块的组成部分，用双下划线连接，如 .popup__header、.card__btn
+ *   Modifier（修饰符）: 块或元素的外观变体，用双连字符连接，如 .card--info、.card__btn--save
+ *
+ * 页面布局结构（从上到下）:
+ *   .popup（主容器）
+ *     ├── .popup__header（头部：Logo + 标题 + GitHub 链接）
+ *     ├── .card--info（颜色信息卡片：HEX/RGB/HSL/HSV 按钮 + 收藏按钮 + 颜色预览）
+ *     ├── .card--history（历史记录卡片：最近取色列表 + 分页控制）
+ *     ├── .card--favorites（收藏夹卡片：收藏颜色列表 + 计数器 + 清空按钮）
+ *     └── .popup__footer（底部：取色按钮）
+ * ============================================================ */
 
 /* ========== 基础重置 ========== */
+/* 使用通用选择器 * 重置所有元素的默认样式，确保跨浏览器一致性 */
 * {
   margin: 0;                           /* 去掉默认外边距 */
   padding: 0;                          /* 去掉默认内边距 */
-  box-sizing: border-box;              /* 边框盒模型，宽度计算更直观 */
-  -webkit-font-smoothing: antialiased; /* Webkit 抗锯齿 */
-  -moz-osx-font-smoothing: grayscale;  /* Firefox 抗锯齿 */
+  box-sizing: border-box;              /* 边框盒模型：width 包含 padding 和 border，宽度计算更直观 */
+  -webkit-font-smoothing: antialiased; /* Webkit 内核字体抗锯齿，使文字渲染更平滑 */
+  -moz-osx-font-smoothing: grayscale;  /* Firefox macOS 字体抗锯齿 */
 }
 
-/* ========== 页面级 ========== */
+/* ========== 页面级基础样式 ========== */
 body {
-  font-weight: 400;                   /* 字重 */
+  font-weight: 400;                   /* 正常字重，覆盖浏览器默认的 body 字重 */
 }
 
-/* ========== Popup 主容器 ========== */
+/* ========== Popup 主容器 (Block: popup) ========== */
+/* 整个弹窗的最外层容器，使用纵向弹性布局排列各功能区块 */
 .popup {
   display: flex;                      /* 弹性布局 */
-  flex-direction: column;             /* 子元素垂直排列 */
-  gap: 12px;                          /* 子元素间距 */
-  width: 244px;                       /* 弹窗固定宽度 */
-  min-height: 160px;                  /* 弹窗最小高度 */
-  background: #fcfcfc;              /* 背景色 */
-  padding: 12px 8px 12px 8px;         /* 内边距 - 上右下左 */
-  user-select: none;                  /* 默认禁止选择文本 */
+  flex-direction: column;             /* 子元素垂直排列（从上到下） */
+  gap: 12px;                          /* 各区块之间的间距 */
+  width: 244px;                       /* 弹窗固定宽度（Chrome 扩展 popup 推荐宽度） */
+  min-height: 160px;                  /* 弹窗最小高度，防止内容过少时弹窗过矮 */
+  background: #fcfcfc;              /* 浅灰白色背景 */
+  padding: 12px 8px 12px 8px;         /* 内边距：上右下左 */
+  user-select: none;                  /* 默认禁止选择文本（取色器不需要文本选择功能） */
 }
 
-/* ========== 头部 ========== */
+/* ========== 头部 (Element: popup__header) ========== */
 .popup__header {
-  display: flex;                      /* 弹性布局 */
+  display: flex;                      /* 弹性布局：Logo、标题水平排列 */
   justify-content: start;             /* 左对齐 */
 }
 
+/* Logo 图标 */
 .popup__logo {
   width: 24px;                       /* Logo 宽度 */
   height: 24px;                      /* Logo 高度 */
-  margin-right: 6px;                 /* Logo 与标题间距 */
+  margin-right: 6px;                 /* Logo 与标题之间的水平间距 */
 }
 
+/* 标题文字 */
 .popup__title {
-  font-weight: 400;                   /* 常规字重，覆盖 h1 默认粗体 */
+  font-weight: 400;                   /* 常规字重，覆盖 h1 标签默认的粗体 */
   font-size: 14px;                    /* 标题字号 */
-  line-height: 1.6;                   /* 行高 */
+  line-height: 1.6;                   /* 行高，与 Logo 对齐 */
   color: #333;                      /* 深灰色文字 */
   letter-spacing: 0.3px;              /* 字间距微调 */
 }
 
+/* GitHub 仓库链接图标 */
 .popup__github {
-  margin-left: auto;                  /* 左边距撑满: 贴右对齐 */
-  display: flex;                      /* 弹性布局，使内部图标居中 */
+  margin-left: auto;                  /* 左边距设为 auto，利用弹性布局将其推到最右侧 */
+  display: flex;                      /* 弹性布局：使内部 SVG 图标居中 */
   align-items: center;                /* 垂直居中 */
   justify-content: center;            /* 水平居中 */
-  width: 24px;                        /* 与 logo 同宽，保持视觉一致 */
-  height: 24px;                       /* 与 logo 同高 */
+  width: 20px;                        /* 与 Logo 同宽，保持视觉对称 */
+  height: 20px;                       /* 与 Logo 同高 */
   color: #333;                      /* 默认颜色，与标题文字一致 */
-  cursor: pointer;                    /* 手型光标 */
-  transition: color 0.15s ease;       /* 颜色过渡动画 */
-  text-decoration: none;              /* 去掉下划线 */
+  cursor: pointer;                    /* 手型光标，暗示可点击 */
+  transition: color 0.15s ease;       /* 颜色过渡动画，0.15 秒缓动 */
+  text-decoration: none;              /* 去掉链接默认下划线 */
 }
 
 .popup__github:hover {
-  color: #409EFF;                   /* 悬停时变为蓝色 */
+  color: #409EFF;                   /* 悬停时变为 Element Plus 风格的蓝色 */
 }
 
+/* GitHub SVG 图标 */
 .popup__github-icon {
-  width: 100%;                        /* 撑满父容器 */
-  height: 100%;                       /* 撑满父容器 */
+  width: 100%;                        /* 撑满父容器宽度 */
+  height: 100%;                       /* 撑满父容器高度 */
 }
 
-/* ========== 通用卡片 (Block) ========== */
+/* ========== 通用卡片 (Block: card) ========== */
+/* 所有功能区域的外层容器，提供统一的背景、圆角和阴影 */
 .card {
-  background-color: #e8e8eb;        /* 背景色 */
+  background-color: #e8e8eb;        /* 浅灰色背景，与主容器区分 */
   border-radius: 4px;                 /* 圆角 */
   padding: 4px;                       /* 内边距 */
-  box-shadow: 0 4px 12px rgba(0,0,0,0.05); /* 轻微阴影 */
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05); /* 轻微阴影，增加层次感 */
 }
 
-/* ========== 信息卡片 (Modifier) ========== */
+/* ========== 信息卡片 (Modifier: card--info) ========== */
+/* 颜色信息展示区：左侧是格式按钮列表，右侧是颜色预览块 */
 .card--info {
   display: flex;                      /* 弹性布局 */
   flex-direction: row;                /* 子元素水平排列 */
-  gap: 4px;                           /* 子元素间距 */
-  align-items: stretch;               /* 让预览卡片和按钮区等高 */
+  gap: 4px;                           /* 左右两区域之间的间距 */
+  align-items: stretch;               /* 让预览块和按钮区等高（拉伸对齐） */
   font-size: 14px;                    /* 卡片内文字大小 */
 }
 
-/* ========== 历史颜色卡片 (Modifier) ========== */
+/* ========== 历史颜色卡片 (Modifier: card--history) ========== */
+/* 展示最近取色记录的卡片，包含颜色圆形列表和分页控制 */
 .card--history {
-  color: #777;                      /* 文字颜色 */
+  color: #777;                      /* 标题文字颜色 */
   font-size: 14px;                    /* 卡片内文字大小 */
 }
 
-/* ========== 卡片内容 (Element) ========== */
+/* ========== 收藏夹卡片 (Modifier: card--favorites) ========== */
+/* 展示用户主动收藏的颜色列表，位于历史记录卡片下方 */
+.card--favorites {
+  color: #777;                      /* 标题文字颜色 */
+  font-size: 14px;                    /* 卡片内文字大小 */
+}
+
+/* ========== 卡片内容容器 (Element: card__content) ========== */
+/* 卡片内部的通用内容容器，纵向排列子元素 */
 .card__content {
   display: flex;                      /* 弹性布局 */
   flex-direction: column;             /* 子元素垂直排列 */
   gap: 4px;                           /* 子元素间距 */
 }
 
-/* ========== 卡片内容 - 窄宽变体 (Element Modifier) ========== */
+/* ========== 卡片内容 - 窄宽变体 (Element Modifier: card__content--narrow) ========== */
+/* 用于信息卡片左侧的按钮区域，宽度占 75%，剩余 25% 给右侧的颜色预览块 */
 .card__content--narrow {
-  width: 75%;                         /* 占总卡片宽度的百分比，剩余的比例给预览卡片 */
+  width: 75%;
 }
 
-/* ========== 预览颜色卡片 (Element) ========== */
+/* ========== 颜色预览块 (Element: card__preview) ========== */
+/* 信息卡片右侧的颜色预览区域，背景色随当前选中颜色变化 */
 .card__preview {
-  flex: 1;                            /* 占满剩余空间 */
-  min-width: 0;                       /* 允许缩小到比内容更窄 */
+  flex: 1;                            /* 占满剩余空间（约 25%） */
+  min-width: 0;                       /* 允许缩小到比内容更窄，防止弹性布局溢出 */
   overflow: hidden;                   /* 超出部分隐藏 */
   height: auto;                       /* 高度自适应内容 */
   background-color: #ffffff;        /* 默认白色背景 */
-  border: 1px solid #DCDFE6;        /* 边框 */
+  border: 1px solid #DCDFE6;        /* 浅灰色边框 */
   border-radius: 4px;                 /* 圆角 */
   display: flex;                      /* 内部文字居中 */
   align-items: center;
   justify-content: center;
 }
 
+/* 预览块内的 "Preview" 占位文字 */
 .card__preview-text {
-  color: #777;                      /* 文字颜色 */
-  font-size: 14px;                    /* 文字大小 */
-  text-align: center;                 /* 文字居中 */
-  user-select: none;                  /* 禁止选择文本 */
+  color: #777;                      /* 浅灰色文字 */
+  font-size: 14px;                    /* 与按钮文字同大小 */
+  text-align: center;                 /* 水平居中 */
+  user-select: none;                  /* 禁止选择 */
 }
 
-/* ========== 卡片按钮 (Element) ========== */
+/* ========== 卡片按钮 (Element: card__btn) ========== */
+/* 通用按钮样式：用于 HEX/RGB/HSL/HSV 格式显示和收藏按钮的基础样式 */
+/* 点击按钮会将对应格式的颜色值复制到剪贴板 */
 .card__btn {
   display: flex;                      /* 弹性布局 */
   align-items: center;                /* 内容垂直居中 */
-  width: 100%;                        /* 宽度 */
-  padding: 8px 12px;                  /* 内边距 - 上下 左右 */
+  width: 100%;                        /* 撑满父容器宽度 */
+  padding: 8px 12px;                  /* 内边距：上下 8px，左右 12px */
   font-size: 14px;                    /* 按钮文字大小 */
   color: #777;                      /* 按钮文字颜色 */
   font-weight: 500;                   /* 中等字重 */
-  background: #ffffff;              /* 背景色 */
-  border: 1px solid #DCDFE6;        /* 边框 */
+  background: #ffffff;              /* 白色背景 */
+  border: 1px solid #DCDFE6;        /* 浅灰色边框 */
   border-radius: 4px;                 /* 圆角 */
-  cursor: copy;                       /* 复制光标，暗示可点击复制 */
-  transition: all 0.15s ease;         /* 过渡动画 */
+  cursor: copy;                       /* 复制光标样式，暗示点击可复制 */
+  transition: all 0.15s ease;         /* 所有属性的过渡动画 */
   text-align: left;                   /* 文字左对齐 */
 }
 
@@ -147,107 +184,271 @@ body {
 }
 
 .card__btn:active {
-  transform: scale(0.98);               /* 点击时轻微缩小 */
+  transform: scale(0.98);               /* 点击时轻微缩小，提供按压反馈 */
 }
 
-/* ========== 历史卡片标题 (Element) ========== */
+/* ========== 收藏按钮变体 (Element Modifier: card__btn--save) ========== */
+/* 星形收藏按钮，默认空心星形，收藏后变为实心星形 + 橙色填充 */
+.card__btn--save {
+  cursor: pointer;                    /* 手型光标（收藏操作不是复制） */
+  color: #888;                        /* 默认深灰色，确保未收藏时可清晰阅读 */
+  font-size: 13px;                    /* 稍小于复制按钮的字号 */
+  padding: 6px 12px;                  /* 略小的内边距，更紧凑 */
+  justify-content: center;            /* 文字水平居中 */
+}
+
+/* 悬停时星形变为橙色，暗示点击可收藏 */
+.card__btn--save:hover {
+  color: #e67e22;                     /* 橙色星形 */
+  background: #fdf2e9;                /* 浅橙色背景 */
+  border-color: #e67e22;              /* 橙色边框 */
+}
+
+/* 已收藏状态：实心星形 + 橙色填充背景 */
+.card__btn--save.card__btn--saved {
+  color: #fff;                        /* 白色星形 */
+  background: #e67e22;                /* 橙色填充背景，明确表示已收藏 */
+  border-color: #e67e22;              /* 橙色边框 */
+}
+
+.card__btn--save.card__btn--saved:hover {
+  background: #d35400;                /* 悬停时更深橙色，暗示可取消收藏 */
+  border-color: #d35400;
+}
+
+.card__btn--save:active {
+  transform: scale(0.98);             /* 点击时缩小反馈 */
+}
+
+.card__btn--save:disabled {
+  opacity: 0.5;                       /* 达到收藏上限时半透明，暗示不可用 */
+  cursor: not-allowed;                /* 禁止光标 */
+}
+
+/* ========== 卡片标题 (Element: card__title) ========== */
+/* 用于 "Recent:" 和 "Favorites:" 等区块标题文字 */
 .card__title {
   font-weight: 400;                     /* 常规字重 */
-  user-select: none;                    /* 禁止选择文本 */
+  user-select: none;                    /* 禁止选择 */
 }
 
-/* ========== 历史卡片列表 (Element) ========== */
+/* ========== 历史记录分页容器 (Element: card__pagination) ========== */
+/* 包含上一页按钮、颜色列表、下一页按钮的水平排列容器 */
 .card__pagination {
   display: flex;
   align-items: center;
   gap: 6px;
 }
 
+/* ========== 历史颜色列表 (Element: card__list) ========== */
+/* 历史颜色圆形色块的无序列表容器 */
 .card__list {
-  list-style: none;                   /* 去掉列表默认圆点 */
+  list-style: none;                   /* 去掉 ul 默认的圆点标记 */
   display: flex;                      /* 弹性布局 */
-  flex-wrap: wrap;                    /* 允许换行 */
-  gap: 6px;                           /* 列表项间距 */
+  flex-wrap: wrap;                    /* 允许换行（色块过多时自动折行） */
+  gap: 6px;                           /* 色块之间的间距 */
 }
 
-/* ========== 历史颜色圆形项 (Element) ========== */
+/* ========== 历史颜色圆形项 (Element: card__list-item) ========== */
+/* 每个历史颜色用圆形色块表示，背景色即为对应颜色 */
 .card__list-item {
-  width: 28px;
+  width: 28px;                        /* 圆形直径 */
   height: 28px;
-  border-radius: 50%;
-  border: 2px solid rgba(255,255,255,0.8);
-  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-  cursor: pointer;
-  transition: transform 0.15s ease;
-  flex-shrink: 0;
+  border-radius: 50%;                 /* 圆形 */
+  border: 2px solid rgba(255,255,255,0.8); /* 半透明白色边框，与任意背景色形成对比 */
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);  /* 轻微阴影增加立体感 */
+  cursor: pointer;                    /* 手型光标 */
+  transition: transform 0.15s ease;   /* 缩放过渡动画 */
+  flex-shrink: 0;                     /* 不缩小，保持圆形不被压扁 */
 }
 
 .card__list-item:hover {
-  transform: scale(1.2);          /* 悬停时放大圆形 */
+  transform: scale(1.2);             /* 悬停时放大 1.2 倍 */
 }
 
-/* ========== 分页按钮 (Element) ========== */
+/* ========== 分页按钮 (Element: card__page-btn) ========== */
+/* 历史记录的上一页/下一页圆形小按钮 */
 .card__page-btn {
-  width: 22px;
+  width: 22px;                        /* 按钮直径 */
   height: 22px;
-  border-radius: 50%;
-  border: 1px solid #ccc;
-  background: #ffffff;
-  color: #999;
-  font-size: 14px;
-  line-height: 1;
-  display: flex;
+  border-radius: 50%;                 /* 圆形 */
+  border: 1px solid #ccc;            /* 浅灰色边框 */
+  background: #ffffff;              /* 白色背景 */
+  color: #999;                        /* 浅灰色箭头 */
+  font-size: 14px;                    /* 箭头字号 */
+  line-height: 1;                     /* 行高设为 1，防止默认行高导致箭头偏移 */
+  display: flex;                      /* 弹性布局：箭头居中 */
   align-items: center;
   justify-content: center;
   cursor: pointer;
   transition: all 0.15s ease;
-  flex-shrink: 0;
-  padding: 0;
-  user-select: none;
+  flex-shrink: 0;                     /* 不缩小 */
+  padding: 0;                         /* 去掉默认内边距 */
+  user-select: none;                  /* 禁止选择 */
 }
 
+/* 悬停效果（排除禁用状态） */
 .card__page-btn:hover:not(:disabled) {
   background: #f0f0f0;
   border-color: #aaa;
   color: #666;
 }
 
+/* 点击效果（排除禁用状态） */
 .card__page-btn:active:not(:disabled) {
-  transform: scale(0.92);
+  transform: scale(0.92);             /* 点击时缩小 */
 }
 
+/* 禁用状态：首页时禁用"上一页"，末页时禁用"下一页" */
 .card__page-btn:disabled {
-  opacity: 0.3;
+  opacity: 0.3;                       /* 半透明，暗示不可用 */
   cursor: not-allowed;
 }
 
-/* ========== 取色按钮区域 (Element) ========== */
+/* ========== 收藏夹头部 (Element: card__fav-header) ========== */
+/* 收藏夹的标题行：标题 + 计数器 + 清空按钮，水平排列 */
+.card__fav-header {
+  display: flex;                      /* 弹性布局 */
+  align-items: center;                /* 垂直居中 */
+  gap: 6px;                           /* 子元素间距 */
+}
+
+/* ========== 收藏数量计数器 (Element: card__fav-count) ========== */
+/* 显示当前收藏数量 / 最大容量，如 "3/10" */
+.card__fav-count {
+  font-size: 11px;                    /* 小字号，不抢标题视觉 */
+  color: #aaa;                        /* 浅灰色，低对比度 */
+  margin-left: auto;                  /* 自动撑到右侧（在清空按钮左边） */
+  user-select: none;                  /* 禁止选择 */
+}
+
+/* ========== 清空收藏按钮 (Element: card__fav-clear) ========== */
+/* 一键清空所有收藏颜色的小按钮 */
+.card__fav-clear {
+  padding: 2px 6px;                   /* 紧凑内边距 */
+  background: transparent;            /* 透明背景，融入整体设计 */
+  color: #bbb;                        /* 浅灰色文字，低调的视觉权重 */
+  border: 1px solid #ddd;             /* 浅灰边框 */
+  border-radius: 3px;                 /* 小圆角 */
+  cursor: pointer;
+  font-size: 11px;                    /* 小字号 */
+  transition: all 0.15s ease;
+  flex-shrink: 0;                     /* 不缩小 */
+}
+
+.card__fav-clear:hover {
+  color: #e74c3c;                   /* 悬停时变为红色，警告用户这是破坏性操作 */
+  border-color: #e74c3c;              /* 悬停时红色边框 */
+}
+
+/* ========== 收藏颜色列表 (Element: card__fav-list) ========== */
+/* 收藏颜色色块的容器，与历史列表类似但使用方形色块 */
+.card__fav-list {
+  display: flex;                      /* 弹性布局 */
+  flex-wrap: wrap;                    /* 允许换行 */
+  gap: 6px;                           /* 色块间距 */
+  min-height: 28px;                   /* 最小高度，保证空状态时也有占位空间 */
+}
+
+/* ========== 收藏颜色项 (Element: card__fav-item) ========== */
+/* 每个收藏颜色用圆角方形色块表示（与历史的圆形色块在视觉上区分） */
+.card__fav-item {
+  width: 28px;                        /* 色块宽度 */
+  height: 28px;                       /* 色块高度 */
+  border-radius: 4px;                 /* 圆角方形（与历史圆形区分） */
+  cursor: pointer;
+  border: 2px solid rgba(255,255,255,0.8); /* 半透明白色边框 */
+  box-shadow: 0 1px 3px rgba(0,0,0,0.15); /* 轻微阴影 */
+  position: relative;                 /* 建立定位上下文，供删除按钮绝对定位使用 */
+  transition: transform 0.15s ease, border-color 0.15s ease; /* 缩放 + 边框颜色过渡 */
+  flex-shrink: 0;                     /* 不缩小 */
+}
+
+.card__fav-item:hover {
+  transform: scale(1.15);             /* 悬停时放大 1.15 倍 */
+  border-color: #e67e22;              /* 悬停时橙色边框，与收藏按钮主题色一致 */
+}
+
+/* ========== 收藏项删除按钮 (Element: card__fav-delete) ========== */
+/* 每个收藏色块右上角的 × 删除按钮，默认隐藏，悬停色块时显示 */
+.card__fav-delete {
+  position: absolute;                 /* 绝对定位（相对于 .card__fav-item） */
+  top: -5px;                          /* 向上偏移 5px，部分超出色块边界 */
+  right: -5px;                        /* 向右偏移 5px */
+  width: 16px;                        /* 删除按钮尺寸 */
+  height: 16px;
+  background: #e74c3c;              /* 红色背景，暗示删除操作 */
+  color: white;                       /* 白色 × 符号 */
+  border: none;                       /* 无边框 */
+  border-radius: 50%;                 /* 圆形 */
+  font-size: 10px;                    /* × 符号大小 */
+  line-height: 1;                     /* 行高 1，防止默认行高导致 × 偏移 */
+  cursor: pointer;
+  display: flex;                      /* 弹性布局：× 居中 */
+  align-items: center;
+  justify-content: center;
+  opacity: 0;                         /* 默认完全透明（隐藏） */
+  transition: opacity 0.15s;          /* 淡入淡出过渡 */
+  padding: 0;                         /* 去掉内边距 */
+}
+
+/* 悬停收藏项时显示删除按钮 */
+.card__fav-item:hover .card__fav-delete {
+  opacity: 1;                         /* 完全显示 */
+}
+
+/* 悬停删除按钮本身时加深红色 */
+.card__fav-delete:hover {
+  background: #c0392b;              /* 深红色 */
+}
+
+/* ========== 空状态提示文字 (Element: card__hint) ========== */
+/* 用于收藏夹为空时显示的提示文字（如 "暂无收藏"） */
+.card__hint {
+  color: #c0c0c0;                    /* 浅灰色，低调提示 */
+  font-size: 12px;
+  text-align: center;                 /* 水平居中 */
+  width: 100%;                        /* 撑满容器宽度 */
+  padding: 2px 0;                     /* 上下内边距 */
+  user-select: none;                  /* 禁止选择 */
+}
+
+/* ========== 取色按钮区域 (Element: popup__footer) ========== */
+/* 底部取色按钮的外层容器 */
 .popup__footer {
   display: flex;                      /* 弹性布局 */
   justify-content: center;            /* 按钮水平居中 */
 }
 
+/* ========== 取色按钮 (Element: popup__pick-btn) ========== */
+/* 页面底部的主操作按钮，蓝色渐变背景，点击后启动截图取色流程 */
 .popup__pick-btn {
-  width: 100%;                        /* 按钮宽度 */
+  width: 100%;                        /* 撑满容器宽度 */
   height: 40px;                       /* 按钮高度 */
   padding: 4px 0;                     /* 上下内边距 */
-  font-size: 18px;                    /* 按钮文字大小 */
+  font-size: 18px;                    /* 较大字号，突出主操作 */
   font-weight: 600;                   /* 半粗字重 */
-  color: #ffffff;                   /* 文字颜色 */
-  background: linear-gradient(135deg, #409EFF 0%,#74bcfe 100%); /* 渐变背景 */
+  color: #ffffff;                   /* 白色文字 */
+  background: linear-gradient(135deg, #409EFF 0%,#74bcfe 100%); /* 蓝色渐变背景 */
   border: none;                       /* 无边框 */
   border-radius: 4px;                 /* 圆角 */
-  cursor: pointer;                    /* 手型光标 */
+  cursor: pointer;
   transition: all 0.2s ease;          /* 过渡动画 */
-  box-shadow: 0 2px 8px #1d8eff;    /* 阴影 */
+  box-shadow: 0 2px 8px #1d8eff;    /* 蓝色阴影，增强按钮的浮起感 */
 }
 
 .popup__pick-btn:hover {
-  filter: brightness(1.05);           /* 悬停时亮度增加 */
-  box-shadow: 0 4px 10px #0080ff;   /* 阴影增强 */
-  transform: scale(1.00);             /* 悬停大小 */
+  filter: brightness(1.05);           /* 悬停时亮度增加 5% */
+  box-shadow: 0 4px 10px #0080ff;   /* 阴影扩大，浮起感更强 */
+  transform: scale(1.00);             /* 悬停时大小不变（保持基准） */
 }
 
 .popup__pick-btn:active {
-  transform: scale(0.98);             /* 点击时缩小 */
+  transform: scale(0.98);             /* 点击时缩小到 98%，提供按压反馈 */
+}
+
+.popup__pick-btn:disabled {
+  opacity: 0.6;                       /* 禁用时半透明 */
+  cursor: not-allowed;                /* 禁止点击光标 */
+  transform: none;                    /* 禁用时不缩放，保持原大小 */
 }
