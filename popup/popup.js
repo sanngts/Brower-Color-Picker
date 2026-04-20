@@ -31,6 +31,9 @@ async function pickcolor()
 {
     try 
     {
+        // 隐藏取色界面
+        document.body.style.display = 'none';
+        
         const dropper = new EyeDropper();
         const result = await dropper.open();
         const color = result.sRGBHex;
@@ -41,6 +44,9 @@ async function pickcolor()
     } catch (error) 
     {
         console.error(error);
+    } finally {
+        // 取色结束后显示界面
+        document.body.style.display = 'block';
     }
 }
 function hexToRgb(hex) {
