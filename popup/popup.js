@@ -510,12 +510,35 @@ btnClearFavorites.addEventListener("click", () => {
     updateSaveBtnState();                       // 更新收藏按钮状态
 });
 
+/** 重置颜色预览到初始状态（无取色时的默认外观） */
+function resetColorPreview() {
+    // 重置全局颜色对象
+    colors = { hex: '', rgb: '', hsl: '', hsv: '' };
+
+    // 重置格式按钮文本为默认值
+    btnHex.textContent = 'HEX: ';
+    btnRgb.textContent = 'RGB: ';
+    btnHsl.textContent = 'HSL: ';
+    btnHsv.textContent = 'HSV: ';
+
+    // 还原颜色预览块：白色背景 + 显示 "Preview" 文字
+    colorPreview.style.backgroundColor = '#ffffff';
+    colorPreview.querySelector('.card__preview-text').style.display = '';
+
+    // 重置收藏按钮状态
+    btnSave.innerHTML = '&#9734; Favorite';
+    btnSave.classList.remove('card__btn--saved');
+    btnSave.disabled = false;
+    btnSave.title = 'Add to favorites';
+}
+
 // --- 清空历史按钮：一键清空所有历史颜色 ---
 btnClearHistory.addEventListener("click", () => {
     colorHistory = [];                          // 清空内存数组
     currentPage = 0;                            // 重置到第一页
     renderHistoryPage();                        // 重新渲染列表
-    chrome.storage.local.set({ colorHistory: [] }); // 同步到 storage
+    chrome.storage.local.set({ colorHistory: [], pickedColor: '', pickedColorNew: false }); // 同步到 storage
+    resetColorPreview();                        // 还原颜色预览到初始状态
 });
 
 // --- 历史记录分页按钮 ---
@@ -571,8 +594,8 @@ document.addEventListener("DOMContentLoaded", function () {
             updateColorInfo(colorHistory[0], false);
         } else {
             // 情况 D：完全无数据（首次安装使用）
-            //   操作：显示默认的淡红色
-            updateColorInfo('#FF6B6B', false);
+            //   操作：保持初始空白状态
+            resetColorPreview();
         }
     });
 });
