@@ -16,8 +16,6 @@ var overlayEl = null;         // 全屏遮罩层（接收鼠标事件）
 var magnifierEl = null;       // 放大镜浮层（pointer-events:none）
 var magnifierCanvas = null;
 var magnifierCtx = null;
-var colorLabelEl = null;
-var colorBarEl = null;
 var sourceDpr = 1;            // 截图时的设备像素比
 
 var ZOOM = 10;               // 放大倍数
@@ -100,7 +98,7 @@ function createPickerUI() {
   Object.assign(magnifierEl.style, {
     position: "fixed",
     width: (LENS_SIZE + 16) + "px",
-    height: (LENS_SIZE + 38) + "px",
+    height: (LENS_SIZE + 16) + "px",
     borderRadius: "10px",
     overflow: "hidden",
     pointerEvents: "none",
@@ -139,38 +137,6 @@ function createPickerUI() {
 
   lensWrapper.appendChild(magnifierCanvas);
   magnifierEl.appendChild(lensWrapper);
-
-  // --- 颜色信息区 ---
-  var infoArea = document.createElement("div");
-  Object.assign(infoArea.style, {
-    display: "flex",
-    alignItems: "center",
-    gap: "6px",
-    marginTop: "8px",
-    padding: "0 2px",
-  });
-
-  colorBarEl = document.createElement("div");
-  Object.assign(colorBarEl.style, {
-    width: "14px",
-    height: "14px",
-    borderRadius: "3px",
-    border: "1px solid rgba(0,0,0,0.1)",
-    flexShrink: "0",
-  });
-
-  colorLabelEl = document.createElement("span");
-  Object.assign(colorLabelEl.style, {
-    fontSize: "10px",
-    fontFamily: "Consolas, 'Courier New', monospace",
-    color: "#333",
-    fontWeight: "600",
-    letterSpacing: "0.3px",
-  });
-
-  infoArea.appendChild(colorBarEl);
-  infoArea.appendChild(colorLabelEl);
-  magnifierEl.appendChild(infoArea);
 
   // --- 插入 DOM ---
   document.documentElement.appendChild(overlayEl);
@@ -219,13 +185,9 @@ function handleMouseMove(e) {
   pixelX = Math.max(0, Math.min(pixelX, capturedCanvas.width - 1));
   pixelY = Math.max(0, Math.min(pixelY, capturedCanvas.height - 1));
 
-  var hex = readPixelColor(pixelX, pixelY);
 
   drawMagnifiedView(pixelX, pixelY);
   positionMagnifier(x, y);
-
-  colorBarEl.style.backgroundColor = hex;
-  colorLabelEl.textContent = hex + " " + hexToRgb(hex);
 
   magnifierEl.style.display = "block";
   requestAnimationFrame(function () {
@@ -250,17 +212,6 @@ function rgbToHex(r, g, b) {
     [r, g, b].map(function (v) {
       return v.toString(16).padStart(2, "0");
     }).join("").toUpperCase();
-}
-
-// ============================================================
-// HEX 转 RGB 字符串
-// ============================================================
-function hexToRgb(hex) {
-  var h = hex.replace("#", "");
-  var r = parseInt(h.substring(0, 2), 16);
-  var g = parseInt(h.substring(2, 4), 16);
-  var b = parseInt(h.substring(4, 6), 16);
-  return "rgb(" + r + ", " + g + ", " + b + ")";
 }
 
 // ============================================================
@@ -305,7 +256,7 @@ function drawMagnifiedView(centerPx, centerPy) {
 // ============================================================
 function positionMagnifier(cursorX, cursorY) {
   var magW = LENS_SIZE + 16;
-  var magH = LENS_SIZE + 38;
+  var magH = LENS_SIZE + 16;
   var gap = CURSOR_OFFSET;
   var vw = window.innerWidth;
   var vh = window.innerHeight;
@@ -350,7 +301,7 @@ function handleClick(e) {
   chrome.storage.local.set({ pickedColor: hex, pickedColorNew: true });
 
   // 取色成功的视觉反馈（放大镜边框闪烁）
-  magnifierEl.style.boxShadow = "0 0 0 3px #e67e22, 0 4px 24px rgba(0,0,0,0.45)";
+  magnifierEl.style.boxShadow = "0 0 0 3px " + hex + ", 0 4px 24px rgba(0,0,0,0.45)";
   setTimeout(function () {
     cleanupPicker();
   }, 120);

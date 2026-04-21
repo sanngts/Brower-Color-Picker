@@ -185,6 +185,26 @@ function updateColorInfo(hex, addToHistory = true) {
 // ========== 剪贴板复制 ==========
 
 /**
+ * 剪贴板写入的兜底方案
+ * 在 navigator.clipboard.writeText 不可用（如缺少用户手势上下文）时，
+ * 使用 execCommand('copy') 实现复制
+ */
+function fallbackCopyToClipboard(text) {
+    var textarea = document.createElement('textarea');
+    textarea.value = text;
+    textarea.style.position = 'fixed';
+    textarea.style.left = '-9999px';
+    document.body.appendChild(textarea);
+    textarea.select();
+    try {
+        document.execCommand('copy');
+    } catch (e) {
+        // 静默失败
+    }
+    document.body.removeChild(textarea);
+}
+
+/**
  * 复制指定格式的颜色值到系统剪贴板
  * @param {string} colorCode - 颜色格式类型: 'hex' | 'rgb' | 'hsl' | 'hsv'
  * @param {boolean} showFeedback - 是否在 Pick 按钮上显示 "Copied!" 视觉反馈
@@ -208,10 +228,14 @@ function copyColorToClipboard(colorCode, showFeedback = true) {
         text = `${colors.hsv.h}, ${colors.hsv.s}%, ${colors.hsv.v}%`;  // 例: "0, 58%, 100%"
     }
 
-    // 调用浏览器剪贴板 API 写入文本
-    navigator.clipboard.writeText(text).catch(function () {
-        // 剪贴板写入失败时静默处理（某些环境下可能缺少权限）
-    });
+    // 优先使用 Clipboard API，失败时使用 execCommand 兜底
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).catch(function () {
+            fallbackCopyToClipboard(text);
+        });
+    } else {
+        fallbackCopyToClipboard(text);
+    }
 
     // 在 Pick 按钮上显示 "Copied!" 反馈文字，1秒后恢复
     if (showFeedback) {
