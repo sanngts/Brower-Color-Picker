@@ -190,18 +190,21 @@ function updateColorInfo(hex, addToHistory = true) {
  * 使用 execCommand('copy') 实现复制
  */
 function fallbackCopyToClipboard(text) {
-    var textarea = document.createElement('textarea');
-    textarea.value = text;
-    textarea.style.position = 'fixed';
-    textarea.style.left = '-9999px';
+  var textarea = document.createElement('textarea');
+  textarea.value = text;
+  textarea.style.position = 'fixed';
+  textarea.style.left = '-9999px';
+  var previousFocus = document.activeElement;
+  try {
     document.body.appendChild(textarea);
     textarea.select();
-    try {
-        document.execCommand('copy');
-    } catch (e) {
-        // 静默失败
-    }
-    document.body.removeChild(textarea);
+    return document.execCommand('copy') === true;
+  } catch (error) {
+    return false;
+  } finally {
+    textarea.remove();
+    if (previousFocus && previousFocus.focus) previousFocus.focus({preventScroll: true});
+  }
 }
 
 /**
@@ -210,7 +213,7 @@ function fallbackCopyToClipboard(text) {
  * @param {boolean} showFeedback - 是否在 Pick 按钮上显示 "Copied!" 视觉反馈
  *   用户手动点击复制按钮时显示反馈；popup 初始化时自动复制不显示（避免每次打开都闪）
  */
-function copyColorToClipboard(colorCode, showFeedback = true) {
+async function copyColorToClipboard(colorCode, showFeedback = true) {
     // 如果尚未取色（全局颜色对象为空），直接返回
     if (!colors.hex) {
         return;
@@ -228,22 +231,26 @@ function copyColorToClipboard(colorCode, showFeedback = true) {
         text = `${colors.hsv.h}, ${colors.hsv.s}%, ${colors.hsv.v}%`;  // 例: "0, 58%, 100%"
     }
 
-    // 优先使用 Clipboard API，失败时使用 execCommand 兜底
+  var copied = false;
+  try {
     if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(text).catch(function () {
-            fallbackCopyToClipboard(text);
-        });
+      await navigator.clipboard.writeText(text);
+      copied = true;
     } else {
-        fallbackCopyToClipboard(text);
+      copied = fallbackCopyToClipboard(text);
     }
-
-    // 在 Pick 按钮上显示 "Copied!" 反馈文字，1秒后恢复
-    if (showFeedback) {
-        btnPick.textContent = 'Copied!';
-        setTimeout(() => {
-            btnPick.textContent = 'Pick';
-        }, 1000);
-    }
+  } catch (error) {
+    copied = fallbackCopyToClipboard(text);
+  }
+  var button = btnPick;
+  if (showFeedback && button && !button.disabled) {
+    var feedback = copied ? 'Copied!' : 'Copy failed - click color to retry';
+    button.textContent = feedback;
+    setTimeout(function () {
+      if (!button.disabled && button.textContent === feedback) button.textContent = 'Pick';
+    }, copied ? 1000 : 3000);
+  }
+  return copied;
 }
 
 // ========== 取色逻辑（截图 + 内容脚本方式） ==========
@@ -264,6 +271,11 @@ function copyColorToClipboard(colorCode, showFeedback = true) {
  *   5. content script 确认接收后关闭 popup（让用户在页面上操作）
  */
 function pickColor() {
+    // Invoke synchronously from the click to preserve EyeDropper user activation.
+    if (new URLSearchParams(window.location.search).get('mode') === 'native') {
+        pickColorWithEyeDropper();
+        return;
+    }
     // 设置按钮为加载状态，防止用户重复点击
     btnPick.disabled = true;
     btnPick.textContent = 'Capturing...';
@@ -277,15 +289,15 @@ function pickColor() {
         }
 
         // 截取当前可见标签页的屏幕截图（返回 base64 编码的 PNG data URL）
-        chrome.tabs.captureVisibleTab(null, { format: "png" }, function (dataUrl) {
-            if (chrome.runtime.lastError || !dataUrl) {
+        chrome.runtime.sendMessage({type: 'CAPTURE_TAB', tabId: tab.id}, function (response) {
+            if (chrome.runtime.lastError || !response || !response.ok) {
                 console.warn("[Pick] 截图失败，切换到 EyeDropper 模式:", chrome.runtime.lastError);
                 pickColorWithEyeDropper();
                 return;
             }
 
             // 将截图数据和取色指令发送给 content script
-            sendPickerMessage(tab.id, dataUrl, 0);
+            sendPickerMessage(tab.id, response.dataUrl, 0);
         });
     });
 }
@@ -328,7 +340,10 @@ function sendPickerMessage(tabId, dataUrl, retryCount) {
             pickColorWithEyeDropper();
             return;
         }
-        // 消息发送成功 → 关闭 popup，让用户在页面上使用放大镜取色
+        if (!response || !response.ok) {
+            resetPickBtn();
+            return;
+        }
         window.close();
     });
 }
@@ -344,13 +359,15 @@ function pickColorWithEyeDropper() {
     if (!window.EyeDropper) {
         console.error("[Pick] EyeDropper API 不支持");
         resetPickBtn();
+        btnPick.textContent = 'Native picker unavailable';
+        btnPick.title = 'Use a browser that supports the EyeDropper API.';
         return;
     }
 
     btnPick.disabled = true;
     btnPick.textContent = 'Picking...';
 
-    const eyeDropper = new EyeDropper();
+    const eyeDropper = new window.EyeDropper();
     eyeDropper.open()
         .then(function (result) {
             // 取色成功，获取颜色值
@@ -372,8 +389,8 @@ function pickColorWithEyeDropper() {
             // 尝试在 popup 内更新 UI（EyeDropper 可能已关闭 popup，DOM 可能不存在）
             try {
                 updateColorInfo(hex, true);
+                resetPickBtn();
                 copyColorToClipboard('hex', true);
-                btnPick.disabled = false;
             } catch (e) {
                 // popup 已被关闭，忽略 UI 更新错误，颜色已保存到 storage
                 // 下次打开 popup 时会从 storage 读取并显示
@@ -381,8 +398,11 @@ function pickColorWithEyeDropper() {
         })
         .catch(function (error) {
             // 用户取消取色或出错
-            console.error("[Pick] EyeDropper 取色失败:", error);
             resetPickBtn();
+            if (error.name !== 'AbortError') {
+                console.error("[Pick] EyeDropper 取色失败:", error);
+                btnPick.textContent = 'Pick failed - retry';
+            }
         });
 }
 
@@ -472,6 +492,28 @@ function addHistoryColor(hex) {
 // 收藏夹允许用户主动保存喜欢的颜色，与自动记录的历史不同
 // 最多保存 MAX_FAVORITES 个颜色，用户可以手动删除或清空
 
+function isFavoriteColor(hex) {
+  return savedColors.some(function (color) { return color.toUpperCase() === hex.toUpperCase(); });
+}
+function requestFavoriteChange(action, color) {
+  chrome.runtime.sendMessage({type: 'FAVORITES_MUTATE', action: action, color: color}, function (response) {
+    if (chrome.runtime.lastError || !response || !response.ok) {
+      var button = btnSave;
+      if (button) {
+        button.textContent = 'Save failed - retry';
+        button.title = (response && response.error) || 'Could not update favorites. Please retry.';
+      }
+    }
+  });
+}
+chrome.storage.onChanged.addListener(function (changes, area) {
+  if (area !== 'local' || !changes.savedColors) return;
+  savedColors = changes.savedColors.newValue || [];
+
+  renderFavorites();
+  updateSaveBtnState();
+});
+
 /**
  * 渲染收藏颜色列表
  * 遍历 savedColors 数组，为每个颜色创建一个带删除按钮的色块
@@ -508,10 +550,7 @@ function renderFavorites() {
             deleteBtn.textContent = '\u00d7';           // × 字符（乘号）
             deleteBtn.addEventListener('click', (e) => {
                 e.stopPropagation();  // 阻止冒泡，避免触发父元素的 click 事件
-                savedColors.splice(index, 1);  // 从数组中移除该项
-                renderFavorites();  // 重新渲染列表
-                updateSaveBtnState(); // 同步更新收藏按钮状态
-                chrome.storage.local.set({ savedColors: savedColors });  // 同步到 storage
+                requestFavoriteChange('remove', color);
             });
 
             item.appendChild(deleteBtn);
@@ -530,12 +569,7 @@ function renderFavorites() {
  * @param {string} hex - 要收藏的 HEX 颜色值
  */
 function addFavorite(hex) {
-    // 达到收藏上限时不添加
-    if (savedColors.length >= MAX_FAVORITES) return;
-    savedColors.unshift(hex);     // 插入到数组头部（最新在前）
-    renderFavorites();         // 重新渲染列表
-    // 持久化收藏颜色到 chrome.storage.local
-    chrome.storage.local.set({ savedColors: savedColors });
+    requestFavoriteChange('add', hex);
 }
 
 /**
@@ -544,7 +578,7 @@ function addFavorite(hex) {
  */
 function updateSaveBtnState() {
     if (!colors.hex) return;
-    const isSaved = savedColors.includes(colors.hex);
+    const isSaved = isFavoriteColor(colors.hex);
     if (isSaved) {
         btnSave.innerHTML = '&#9733; Favorited';   // ★ 实心星形 + "Favorited"
         btnSave.classList.add('card__btn--saved');   // 添加已收藏样式（橙色填充）
@@ -579,27 +613,11 @@ btnHsv.addEventListener("click", () => copyColorToClipboard('hsv'));
 btnSave.addEventListener("click", () => {
     if (!colors.hex || btnSave.disabled) return;   // 尚未取色或已禁用时不执行
 
-    const index = savedColors.indexOf(colors.hex);
-    if (index !== -1) {
-        // 已收藏 → 取消收藏
-        savedColors.splice(index, 1);
-    } else {
-        // 未收藏 → 添加收藏（头部插入，最新在前）
-        if (savedColors.length >= MAX_FAVORITES) return;
-        savedColors.unshift(colors.hex);
-    }
-
-    renderFavorites();    // 重新渲染收藏列表
-    updateSaveBtnState(); // 更新按钮状态（星形切换）
-    chrome.storage.local.set({ savedColors: savedColors }); // 持久化到 storage
+    requestFavoriteChange(isFavoriteColor(colors.hex) ? 'remove' : 'add', colors.hex);
 });
 
-// --- 清空收藏按钮：一键清空所有收藏颜色 ---
 btnClearFavorites.addEventListener("click", () => {
-    savedColors = [];                          // 清空内存数组
-    renderFavorites();                          // 重新渲染列表（显示空状态提示）
-    chrome.storage.local.set({ savedColors: [] }); // 同步到 storage
-    updateSaveBtnState();                       // 更新收藏按钮状态
+    requestFavoriteChange('clear');
 });
 
 /** 重置颜色预览到初始状态（无取色时的默认外观） */
@@ -709,6 +727,9 @@ function showRestrictedNotice() {
 //   3. 根据数据状态决定显示什么内容
 
 document.addEventListener("DOMContentLoaded", function () {
+    if (new URLSearchParams(window.location.search).get('mode') === 'native') {
+        btnPick.title = 'Native screen picker - press Esc to cancel';
+    }
     // 检测是否为受限页面，如果是则显示提示
     isRestrictedPage(function (restricted) {
         if (restricted) {

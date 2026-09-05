@@ -39,14 +39,17 @@ function isRestrictedUrl(url) {
  * 普通页面 → 清除 popup（点击图标触发 onClicked 事件，注入浮层）
  * @param {chrome.tabs.Tab} tab - 标签页对象
  */
+// X uses an extension popup, so opening the panel does not depend on page DOM injection.
+function popupForUrl(url) {
+  if (/^https?:\/\/(?:[\w-]+\.)*(?:x|twitter)\.com(?::\d+)?(?:[/?#]|$)/i.test(url || '')) {
+    return 'popup/popup.html?mode=native';
+  }
+  return isRestrictedUrl(url) ? 'popup/popup.html' : '';
+}
 function updatePopupForTab(tab) {
   if (!tab.id || !tab.url) return;
 
-  if (isRestrictedUrl(tab.url)) {
-    chrome.action.setPopup({ tabId: tab.id, popup: "popup/popup.html" });
-  } else {
-    chrome.action.setPopup({ tabId: tab.id, popup: "" });
-  }
+  chrome.action.setPopup({tabId: tab.id, popup: popupForUrl(tab.url)});
 }
 
 // ========== 1. 安装/更新初始化 ==========
@@ -92,6 +95,15 @@ chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
 
 // ========== 3. 点击扩展图标 → 注入浮层（仅普通页面） ==========
 chrome.action.onClicked.addListener(function (tab) {
+  var popup = popupForUrl(tab.url);
+  if (popup) {
+    chrome.action.setPopup({tabId: tab.id, popup: popup}).then(function () {
+      return chrome.action.openPopup();
+    }).catch(function (error) {
+      console.error('[BG] Could not open popup; click the extension icon again:', error);
+    });
+    return;
+  }
   chrome.tabs.sendMessage(tab.id, { type: "TOGGLE_FLOAT_PANEL" }, function (response) {
     if (chrome.runtime.lastError) {
       chrome.scripting.executeScript({
@@ -114,21 +126,59 @@ chrome.action.onClicked.addListener(function (tab) {
   });
 });
 
+
+// Serialize read-modify-write operations so different panels cannot overwrite favorites.
+var favoriteQueue = Promise.resolve();
+async function mutateFavorites(message) {
+  if (!['add', 'remove', 'clear'].includes(message.action)) throw new Error('Invalid favorite action');
+  if (message.action !== 'clear' && !/^#[0-9a-f]{6}$/i.test(message.color || '')) throw new Error('Invalid color');
+  var result = await chrome.storage.local.get('savedColors');
+  var favorites = Array.from(new Set((result.savedColors || []).map(color => color.toUpperCase())));
+  var color = (message.color || '').toUpperCase();
+  if (message.action === 'clear') favorites = [];
+  if (message.action === 'remove') favorites = favorites.filter(item => item !== color);
+  if (message.action === 'add' && !favorites.includes(color)) {
+    if (favorites.length >= 12) throw new Error('Favorites are full');
+    favorites.unshift(color);
+  }
+  await chrome.storage.local.set({savedColors: favorites});
+  return {ok: true};
+}
+
+// Detect switching away and back, as well as navigation, during an asynchronous capture.
+var captureVersions = new Map();
+function invalidateCapture(windowId) {
+  captureVersions.set(windowId, (captureVersions.get(windowId) || 0) + 1);
+}
+chrome.tabs.onActivated.addListener(info => invalidateCapture(info.windowId));
+chrome.tabs.onUpdated.addListener((tabId, change, tab) => {
+  if (change.url || change.status === 'loading') invalidateCapture(tab.windowId);
+});
+chrome.windows.onRemoved.addListener(windowId => captureVersions.delete(windowId));
+async function captureForTab(tabId) {
+  var tab = await chrome.tabs.get(tabId);
+  if (!tab.active) throw new Error('The requested tab is no longer active');
+  var version = captureVersions.get(tab.windowId) || 0;
+  var dataUrl = await chrome.tabs.captureVisibleTab(tab.windowId, {format: 'png'});
+  var current = await chrome.tabs.get(tabId);
+  if (!current.active || current.windowId !== tab.windowId || current.url !== tab.url ||
+      (captureVersions.get(tab.windowId) || 0) !== version) {
+    throw new Error('The tab changed during capture. Please retry.');
+  }
+  return {ok: true, dataUrl: dataUrl};
+}
+
 // ========== 4. 消息监听 ==========
 chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
-  if (message.type === "PICKER_STARTED") {
-    chrome.tabs.captureVisibleTab(null, { format: "png" }, function (dataUrl) {
-      if (chrome.runtime.lastError || !dataUrl) {
-        console.error("[BG] 截图失败:", chrome.runtime.lastError);
-        sendResponse({ ok: false, error: "capture failed" });
-        return;
-      }
-      chrome.tabs.sendMessage(sender.tab.id, {
-        type: "PICKER_READY",
-        dataUrl: dataUrl
-      });
-      sendResponse({ ok: true });
-    });
+  if (message.type === 'FAVORITES_MUTATE') {
+    var operation = favoriteQueue.then(() => mutateFavorites(message));
+    favoriteQueue = operation.catch(() => {});
+    operation.then(sendResponse, error => sendResponse({ok: false, error: error.message}));
+    return true;
+  }
+  if (message.type === 'PICKER_STARTED' || message.type === 'CAPTURE_TAB') {
+    var tabId = sender.tab ? sender.tab.id : message.tabId;
+    captureForTab(tabId).then(sendResponse, error => sendResponse({ok: false, error: error.message}));
     return true;
   }
 

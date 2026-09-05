@@ -29,7 +29,13 @@ var overlayEl = null;
 var magnifierEl = null;
 var magnifierCanvas = null;
 var magnifierCtx = null;
+var magnifierHintEl = null;
+var pickerThemeMedia = null;
+var handlePickerThemeChange = null;
 var sourceDpr = 1;
+// 当前预览中心在截图画布中的像素坐标。独立于鼠标位置，方便键盘精调。
+var pickerPixelX = null;
+var pickerPixelY = null;
 
 var ZOOM = 10;
 var LENS_SIZE = 150;
@@ -186,6 +192,29 @@ function loadDataAndUpdate() {
   });
 }
 
+
+function isFavoriteColor(hex) {
+  return savedColors.some(function (color) { return color.toUpperCase() === hex.toUpperCase(); });
+}
+function requestFavoriteChange(action, color) {
+  chrome.runtime.sendMessage({type: 'FAVORITES_MUTATE', action: action, color: color}, function (response) {
+    if (chrome.runtime.lastError || !response || !response.ok) {
+      var button = fp.btnSave;
+      if (button) {
+        button.textContent = 'Save failed - retry';
+        button.title = (response && response.error) || 'Could not update favorites. Please retry.';
+      }
+    }
+  });
+}
+chrome.storage.onChanged.addListener(function (changes, area) {
+  if (area !== 'local' || !changes.savedColors) return;
+  savedColors = changes.savedColors.newValue || [];
+  if (!fp.favoriteList) return;
+  renderFavorites();
+  updateSaveBtnState();
+});
+
 function bindFloatPanelEvents() {
   fp.closeBtn.addEventListener("click", function () {
     hideFloatPanel();
@@ -205,23 +234,11 @@ function bindFloatPanelEvents() {
 
   fp.btnSave.addEventListener("click", function () {
     if (!colors.hex || fp.btnSave.disabled) return;
-    var index = savedColors.indexOf(colors.hex);
-    if (index !== -1) {
-      savedColors.splice(index, 1);
-    } else {
-      if (savedColors.length >= MAX_FAVORITES) return;
-      savedColors.unshift(colors.hex);
-    }
-    renderFavorites();
-    updateSaveBtnState();
-    chrome.storage.local.set({ savedColors: savedColors });
+    requestFavoriteChange(isFavoriteColor(colors.hex) ? 'remove' : 'add', colors.hex);
   });
 
   fp.btnClearFavorites.addEventListener("click", function () {
-    savedColors = [];
-    renderFavorites();
-    chrome.storage.local.set({ savedColors: [] });
-    updateSaveBtnState();
+    requestFavoriteChange('clear');
   });
 
   fp.btnClearHistory.addEventListener("click", function () {
@@ -253,15 +270,18 @@ function bindFloatPanelEvents() {
 function startPickerFromFloatPanel() {
   fp.btnPick.disabled = true;
   fp.btnPick.textContent = 'Capturing...';
-
-  // 发送消息给 background，让 background 执行截图
-  chrome.runtime.sendMessage({ type: "PICKER_STARTED" }, function (response) {
-    if (chrome.runtime.lastError || !response || !response.ok) {
-      console.error("[Pick] 启动取色失败:", chrome.runtime.lastError);
-      resetPickBtn();
+  var viewport = {width: innerWidth, height: innerHeight, x: scrollX, y: scrollY};
+  chrome.runtime.sendMessage({type: 'PICKER_STARTED'}, function (response) {
+    resetPickBtn();
+    if (chrome.runtime.lastError || !response || !response.ok || document.hidden ||
+        viewport.width !== innerWidth || viewport.height !== innerHeight ||
+        viewport.x !== scrollX || viewport.y !== scrollY) {
+      showFloatPanel();
+      fp.btnPick.textContent = 'Capture changed or failed - retry';
+      return;
     }
-    // 截图完成后 background 会发送 PICKER_READY 消息回来
-    // 在消息监听中处理 PICKER_READY
+    sourceDpr = window.devicePixelRatio || 1;
+    initPicker(response.dataUrl);
   });
 }
 
@@ -277,10 +297,17 @@ function resetPickBtn() {
 // ============================================================
 
 function initPicker(dataUrl) {
+  if (pickerActive) return;
   pickerActive = true;
-
+  var viewportWidth = innerWidth;
+  var viewportHeight = innerHeight;
   var img = new Image();
   img.onload = function () {
+    if (!pickerActive || document.hidden || viewportWidth !== innerWidth || viewportHeight !== innerHeight) {
+      cleanupPicker();
+      showFloatPanel();
+      return;
+    }
     capturedCanvas = document.createElement("canvas");
     capturedCanvas.width = img.naturalWidth;
     capturedCanvas.height = img.naturalHeight;
@@ -291,7 +318,9 @@ function initPicker(dataUrl) {
 
   img.onerror = function () {
     console.error("[颜色拾取器] 截图图片加载失败");
-    pickerActive = false;
+    cleanupPicker();
+    showFloatPanel();
+    fp.btnPick.textContent = 'Capture failed - retry';
   };
 
   img.src = dataUrl;
@@ -301,6 +330,7 @@ function createPickerUI() {
   overlayEl = document.createElement("div");
   overlayEl.id = "__cp_overlay__";
   Object.assign(overlayEl.style, {
+    all: 'initial', margin: '0', padding: '0', border: '0',
     position: "fixed",
     top: "0",
     left: "0",
@@ -310,12 +340,24 @@ function createPickerUI() {
     cursor: buildCrosshairCursor(),
   });
 
+  Object.assign(capturedCanvas.style, {
+    all: 'initial',
+    position: 'absolute', top: '0', left: '0', width: '100%', height: '100%',
+    pointerEvents: 'none', margin: '0', padding: '0', border: '0', maxWidth: 'none', maxHeight: 'none'
+  });
+  overlayEl.style.background = '#fff';
+  overlayEl.appendChild(capturedCanvas);
+  overlayEl.addEventListener('wheel', preventPickerScroll, {passive: false});
+  overlayEl.addEventListener('touchmove', preventPickerScroll, {passive: false});
+  window.addEventListener('resize', cancelChangedPicker);
+  document.addEventListener('visibilitychange', cancelHiddenPicker);
+
   magnifierEl = document.createElement("div");
   magnifierEl.id = "__cp_magnifier__";
   Object.assign(magnifierEl.style, {
     position: "fixed",
     width: (LENS_SIZE + 16) + "px",
-    height: (LENS_SIZE + 16) + "px",
+    height: (LENS_SIZE + 50) + "px",
     borderRadius: "10px",
     overflow: "hidden",
     pointerEvents: "none",
@@ -353,6 +395,31 @@ function createPickerUI() {
   lensWrapper.appendChild(magnifierCanvas);
   magnifierEl.appendChild(lensWrapper);
 
+  magnifierHintEl = document.createElement("div");
+  magnifierHintEl.textContent = "方向键微调 · Enter 取色\nEsc 取消";
+  Object.assign(magnifierHintEl.style, {
+    color: "#4b5563",
+    fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+    fontSize: "11px",
+    lineHeight: "16px",
+    textAlign: "center",
+    whiteSpace: "pre-line",
+  });
+  magnifierEl.appendChild(magnifierHintEl);
+
+  pickerThemeMedia = window.matchMedia("(prefers-color-scheme: dark)");
+  handlePickerThemeChange = function () {
+    var isDark = pickerThemeMedia.matches;
+    magnifierEl.style.background = isDark ? "#1f2937" : "#fff";
+    magnifierHintEl.style.color = isDark ? "#d1d5db" : "#4b5563";
+  };
+  handlePickerThemeChange();
+  if (pickerThemeMedia.addEventListener) {
+    pickerThemeMedia.addEventListener("change", handlePickerThemeChange);
+  } else {
+    pickerThemeMedia.addListener(handlePickerThemeChange);
+  }
+
   document.documentElement.appendChild(overlayEl);
   overlayEl.appendChild(magnifierEl);
 
@@ -380,21 +447,22 @@ function buildCrosshairCursor() {
 function handleMouseMove(e) {
   if (!pickerActive || !capturedCanvas) return;
 
-  var x = e.clientX;
-  var y = e.clientY;
+  setPickerPosition(
+    Math.round(e.clientX * sourceDpr),
+    Math.round(e.clientY * sourceDpr)
+  );
+}
 
-  var pixelX = Math.round(x * sourceDpr);
-  var pixelY = Math.round(y * sourceDpr);
+function setPickerPosition(pixelX, pixelY) {
+  pickerPixelX = Math.max(0, Math.min(pixelX, capturedCanvas.width - 1));
+  pickerPixelY = Math.max(0, Math.min(pixelY, capturedCanvas.height - 1));
 
-  pixelX = Math.max(0, Math.min(pixelX, capturedCanvas.width - 1));
-  pixelY = Math.max(0, Math.min(pixelY, capturedCanvas.height - 1));
-
-  drawMagnifiedView(pixelX, pixelY);
-  positionMagnifier(x, y);
+  drawMagnifiedView(pickerPixelX, pickerPixelY);
+  positionMagnifier(pickerPixelX / sourceDpr, pickerPixelY / sourceDpr);
 
   magnifierEl.style.display = "block";
   requestAnimationFrame(function () {
-    magnifierEl.style.opacity = "1";
+    if (magnifierEl) magnifierEl.style.opacity = "1";
   });
 }
 
@@ -443,8 +511,8 @@ function drawMagnifiedView(centerPx, centerPy) {
 }
 
 function positionMagnifier(cursorX, cursorY) {
-  var magW = LENS_SIZE + 16;
-  var magH = LENS_SIZE + 16;
+  var magW = magnifierEl.offsetWidth || (LENS_SIZE + 16);
+  var magH = magnifierEl.offsetHeight || (LENS_SIZE + 50);
   var gap = CURSOR_OFFSET;
   var vw = window.innerWidth;
   var vh = window.innerHeight;
@@ -469,13 +537,24 @@ function positionMagnifier(cursorX, cursorY) {
 
 function handleClick(e) {
   if (!pickerActive || !capturedCanvas) return;
+  e.preventDefault();
+  e.stopPropagation();
 
-  var pixelX = Math.round(e.clientX * sourceDpr);
-  var pixelY = Math.round(e.clientY * sourceDpr);
-  pixelX = Math.max(0, Math.min(pixelX, capturedCanvas.width - 1));
-  pixelY = Math.max(0, Math.min(pixelY, capturedCanvas.height - 1));
+  // 鼠标移动会持续同步预览位置；方向键移动后则确认键盘微调后的像素。
+  if (pickerPixelX === null || pickerPixelY === null) {
+    setPickerPosition(
+      Math.round(e.clientX * sourceDpr),
+      Math.round(e.clientY * sourceDpr)
+    );
+  }
 
-  var hex = readPixelColor(pixelX, pixelY);
+  completePick();
+}
+
+function completePick() {
+  if (!pickerActive || !capturedCanvas || pickerPixelX === null || pickerPixelY === null) return;
+
+  var hex = readPixelColor(pickerPixelX, pickerPixelY);
 
   chrome.storage.local.set({ pickedColor: hex, pickedColorNew: true });
 
@@ -486,6 +565,7 @@ function handleClick(e) {
 
   magnifierEl.style.boxShadow = "0 0 0 3px " + hex + ", 0 4px 24px rgba(0,0,0,0.45)";
   setTimeout(function () {
+    if (!pickerActive) return;
     cleanupPicker();
     showFloatPanel();
   }, 120);
@@ -501,11 +581,66 @@ function handleKeyDown(e) {
     e.preventDefault();
     e.stopPropagation();
     cleanupPicker();
+    return;
+  }
+
+  if (e.key === "Enter" || e.key === "NumpadEnter") {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (pickerPixelX === null || pickerPixelY === null) {
+      setPickerPosition(
+        Math.round(window.innerWidth * sourceDpr / 2),
+        Math.round(window.innerHeight * sourceDpr / 2)
+      );
+    }
+    completePick();
+    return;
+  }
+
+  var moveX = 0;
+  var moveY = 0;
+  if (e.key === "ArrowLeft") moveX = -1;
+  if (e.key === "ArrowRight") moveX = 1;
+  if (e.key === "ArrowUp") moveY = -1;
+  if (e.key === "ArrowDown") moveY = 1;
+
+  if (moveX || moveY) {
+    e.preventDefault();
+    e.stopPropagation();
+
+    // 首次按方向键时，从可视区域中心开始预览。
+    if (pickerPixelX === null || pickerPixelY === null) {
+      pickerPixelX = Math.round(window.innerWidth * sourceDpr / 2);
+      pickerPixelY = Math.round(window.innerHeight * sourceDpr / 2);
+    }
+    // 每次精调一个截图像素；在高 DPI 屏幕上也能保持真正的单像素精度。
+    setPickerPosition(pickerPixelX + moveX, pickerPixelY + moveY);
   }
 }
 
+function preventPickerScroll(event) {
+  event.preventDefault();
+}
+function cancelChangedPicker() {
+  cleanupPicker();
+  showFloatPanel();
+}
+function cancelHiddenPicker() {
+  if (document.hidden) cancelChangedPicker();
+}
 function cleanupPicker() {
+  window.removeEventListener('resize', cancelChangedPicker);
+  document.removeEventListener('visibilitychange', cancelHiddenPicker);
   pickerActive = false;
+
+  if (pickerThemeMedia && handlePickerThemeChange) {
+    if (pickerThemeMedia.removeEventListener) {
+      pickerThemeMedia.removeEventListener("change", handlePickerThemeChange);
+    } else {
+      pickerThemeMedia.removeListener(handlePickerThemeChange);
+    }
+  }
 
   if (overlayEl) {
     overlayEl.removeEventListener("mousemove", handleMouseMove, true);
@@ -524,6 +659,11 @@ function cleanupPicker() {
   capturedCanvas = null;
   magnifierCanvas = null;
   magnifierCtx = null;
+  magnifierHintEl = null;
+  pickerThemeMedia = null;
+  handlePickerThemeChange = null;
+  pickerPixelX = null;
+  pickerPixelY = null;
 }
 
 // ============================================================
@@ -602,19 +742,24 @@ function rgbToHsv(rgb) {
 }
 
 function fallbackCopyToClipboard(text) {
-  var textarea = document.createElement("textarea");
+  var textarea = document.createElement('textarea');
   textarea.value = text;
-  textarea.style.position = "fixed";
-  textarea.style.left = "-9999px";
-  document.body.appendChild(textarea);
-  textarea.select();
+  textarea.style.position = 'fixed';
+  textarea.style.left = '-9999px';
+  var previousFocus = document.activeElement;
   try {
-    document.execCommand("copy");
-  } catch (e) {}
-  document.body.removeChild(textarea);
+    document.body.appendChild(textarea);
+    textarea.select();
+    return document.execCommand('copy') === true;
+  } catch (error) {
+    return false;
+  } finally {
+    textarea.remove();
+    if (previousFocus && previousFocus.focus) previousFocus.focus({preventScroll: true});
+  }
 }
 
-function copyColorToClipboard(colorCode, showFeedback) {
+async function copyColorToClipboard(colorCode, showFeedback) {
   if (showFeedback === undefined) showFeedback = true;
   if (!colors.hex) return;
 
@@ -629,20 +774,26 @@ function copyColorToClipboard(colorCode, showFeedback) {
     text = colors.hsv.h + ", " + colors.hsv.s + "%, " + colors.hsv.v + "%";
   }
 
-  if (navigator.clipboard && navigator.clipboard.writeText) {
-    navigator.clipboard.writeText(text).catch(function () {
-      fallbackCopyToClipboard(text);
-    });
-  } else {
-    fallbackCopyToClipboard(text);
+  var copied = false;
+  try {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      await navigator.clipboard.writeText(text);
+      copied = true;
+    } else {
+      copied = fallbackCopyToClipboard(text);
+    }
+  } catch (error) {
+    copied = fallbackCopyToClipboard(text);
   }
-
-  if (showFeedback) {
-    fp.btnPick.textContent = "Copied!";
+  var button = fp.btnPick;
+  if (showFeedback && button && !button.disabled) {
+    var feedback = copied ? 'Copied!' : 'Copy failed - click color to retry';
+    button.textContent = feedback;
     setTimeout(function () {
-      fp.btnPick.textContent = "Pick";
-    }, 1000);
+      if (!button.disabled && button.textContent === feedback) button.textContent = 'Pick';
+    }, copied ? 1000 : 3000);
   }
+  return copied;
 }
 
 function renderHistoryPage() {
@@ -703,10 +854,7 @@ function renderFavorites() {
       deleteBtn.textContent = "\u00d7";
       deleteBtn.addEventListener("click", function (e) {
         e.stopPropagation();
-        savedColors.splice(index, 1);
-        renderFavorites();
-        updateSaveBtnState();
-        chrome.storage.local.set({ savedColors: savedColors });
+        requestFavoriteChange('remove', color);
       });
 
       item.appendChild(deleteBtn);
@@ -719,7 +867,7 @@ function renderFavorites() {
 
 function updateSaveBtnState() {
   if (!colors.hex) return;
-  var isSaved = savedColors.indexOf(colors.hex) !== -1;
+  var isSaved = isFavoriteColor(colors.hex);
   if (isSaved) {
     fp.btnSave.innerHTML = "\u2605 Favorited";
     fp.btnSave.classList.add("cp-btn--saved");
@@ -994,5 +1142,20 @@ function getFloatPanelCSS() {
     '.cp-float-panel::-webkit-scrollbar-track { background: transparent; }',
     '.cp-float-panel::-webkit-scrollbar-thumb { background: #ccc; border-radius: 2px; }',
     '.cp-float-panel::-webkit-scrollbar-thumb:hover { background: #aaa; }',
+
+    '@media (prefers-color-scheme: dark) {',
+    '  .cp-float-panel { background: #1f2937; color: #e5e7eb; box-shadow: 0 4px 24px rgba(0,0,0,0.5); }',
+    '  .cp-title { color: #f3f4f6; }',
+    '  .cp-github, .cp-close-btn, .cp-fav-count, .cp-hint { color: #9ca3af; }',
+    '  .cp-github:hover, .cp-close-btn:hover { color: #f3f4f6; }',
+    '  .cp-close-btn:hover { background: #374151; }',
+    '  .cp-card { background: #374151; }',
+    '  .cp-preview, .cp-btn, .cp-page-btn { background: #1f2937; border-color: #4b5563; }',
+    '  .cp-preview-text, .cp-btn, .cp-page-btn { color: #d1d5db; }',
+    '  .cp-btn:hover, .cp-page-btn:hover:not(:disabled) { background: #4b5563; border-color: #6b7280; }',
+    '  .cp-history-item, .cp-fav-item, .cp-fav-clear { border-color: #4b5563; }',
+    '  .cp-fav-clear:hover { background: #4b5563; }',
+    '  .cp-float-panel::-webkit-scrollbar-thumb { background: #6b7280; }',
+    '}',
   ].join('\n');
 }

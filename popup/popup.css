@@ -489,3 +489,65 @@ body {
   font-size: 12px;
   font-weight: 500;
 }
+
+/* 跟随浏览器的浅色 / 深色外观偏好。 */
+@media (prefers-color-scheme: dark) {
+  .popup {
+    background: #1f2937;
+    color: #e5e7eb;
+  }
+
+  .popup__title,
+  .popup__github {
+    color: #f3f4f6;
+  }
+
+  .card {
+    background-color: #374151;
+  }
+
+  .card--history,
+  .card--favorites,
+  .card__preview-text,
+  .card__btn,
+  .card__page-btn,
+  .card__fav-count,
+  .card__fav-clear,
+  .card__hint {
+    color: #d1d5db;
+  }
+
+  .card__preview,
+  .card__btn,
+  .card__page-btn {
+    background: #1f2937;
+    border-color: #4b5563;
+  }
+
+  .card__btn:hover,
+  .card__page-btn:hover:not(:disabled) {
+    background: #4b5563;
+    border-color: #6b7280;
+    color: #f9fafb;
+  }
+
+  .card__fav-item,
+  .card__list-item,
+  .card__fav-clear {
+    border-color: #4b5563;
+  }
+
+  .card__fav-clear:hover {
+    background: #4b5563;
+  }
+
+  .popup__restricted-notice {
+    background: #422006;
+    border-color: #a16207;
+  }
+
+  .popup__restricted-text:first-of-type,
+  .popup__restricted-text:last-of-type {
+    color: #fde68a;
+  }
+}
